@@ -122,6 +122,7 @@
   .trail-meta .status{color:var(--teal);font-weight:700;}
   .continue-btn{height:36px;border:0;border-radius:4px;background:var(--orange);color:#fff;font-family:var(--sans);font-size:13px;font-weight:700;padding:0 16px 0 17px;display:inline-flex;align-items:center;gap:9px;white-space:nowrap;cursor:pointer;box-shadow:none;}
   .continue-btn:hover{background:var(--orange-dark);}
+  .mobile-trail-hero{display:none;}
   .tabs{display:flex;border-bottom:1px solid var(--n300);padding:0 32px;margin-top:0;position:sticky;top:0;background:#fff;z-index:10;}
   .tab{padding:11px 0;margin-right:28px;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:color .12s;white-space:nowrap;}
   .tab:hover{color:var(--ink);}
@@ -270,6 +271,10 @@
     .main{flex:none;min-height:0;background:#fff;}
     .topbar{position:sticky;top:0;z-index:30;padding:0 14px;}
     .topbar .backbtn,.crumbs{display:none;}
+    .mobile-trail-hero{display:block;margin:14px 14px 0;padding:18px 16px 16px;border-radius:8px;background:#ff8033;color:#fff;box-shadow:0 2px 7px rgba(232,119,34,.22);}
+    .mobile-trail-hero h1{margin:0 0 14px;font-size:21px;font-weight:700;line-height:1.12;color:#fff;}
+    .mobile-continue-btn{width:100%;height:40px;border:1px solid rgba(255,255,255,.5);border-radius:6px;background:#fff;color:var(--orange-dark);font-family:var(--sans);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;}
+    .mobile-continue-btn:hover{background:#fff7ef;}
     .scroll{overflow:visible;}
     .tabs{top:56px;overflow-x:auto;scrollbar-width:none;}
     .tabs::-webkit-scrollbar{display:none;}
@@ -538,6 +543,13 @@
     </div>
 
     <div class="scroll">
+      <section class="mobile-trail-hero" aria-label="Trilha atual">
+        <h1>Trilha Completa Automação</h1>
+        <button class="mobile-continue-btn" type="button" data-open-video="uploads/linguagens-programacao.mp4">
+          <span>Continuar de onde parou</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </button>
+      </section>
       <div class="tabs">
         <div class="tab" data-tab="descricao">Descrição</div>
         <div class="tab active" data-tab="desempenho">Desempenho</div>
