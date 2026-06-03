@@ -102,6 +102,11 @@
   .conteudo.checked:not(.active){background:rgba(61,138,82,.05);}
   .conteudo.checked .ctico{color:var(--green);transition:color .15s;}
   .ctico{transition:color .15s;}
+  @property --fpct{syntax:'<number>';initial-value:0;inherits:false;}
+  @keyframes fillDonut{from{--fpct:0}to{--fpct:100}}
+  @keyframes paAppear{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+  .pa-pie.filling{background:radial-gradient(circle at center,var(--n0) 0 54%,transparent 56%),conic-gradient(var(--orange) calc(var(--fpct)*1%),var(--n300) 0);animation:fillDonut .8s cubic-bezier(.25,.8,.25,1) forwards;}
+  .pa.pa-new{animation:paAppear .25s ease-out;}
   .conteudo.active{background:var(--orange-subtle);border-left:3px solid var(--orange);padding-left:9px;}
   .conteudo.locked{background:#f7f7f7;cursor:not-allowed;opacity:.74;}
   .conteudo.locked:hover{background:#f7f7f7;}
@@ -466,8 +471,8 @@
             <div class="cc-mid">
               <div class="cc-try">Tentativa 1/2</div>
               <div class="pa">
-                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Progresso" tabindex="0" aria-label="Progresso">P</span><span class="pa-pie">100%</span></span>
-                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Aproveitamento" tabindex="0" aria-label="Aproveitamento">A</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Aproveitamento: 100%">A</span><span class="pa-pie">100%</span></span>
               </div>
               <div class="cc-name" title="Conteúdo 1 — Manual Minha área.pdf">Conteúdo 1 — Manual Minha área.pdf</div>
               <div class="cc-type">Documento</div>
@@ -492,8 +497,8 @@
             <div class="cc-mid">
               <div class="cc-try">Tentativa 2/3</div>
               <div class="pa">
-                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Progresso" tabindex="0" aria-label="Progresso">P</span><span class="pa-pie">100%</span></span>
-                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Aproveitamento" tabindex="0" aria-label="Aproveitamento">A</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Aproveitamento: 100%">A</span><span class="pa-pie">100%</span></span>
               </div>
               <div class="cc-name" title="Conteúdo 2 — Linguagens de Programação">Conteúdo 2 — Linguagens de Programação</div>
               <div class="cc-type">Vídeo</div>
@@ -517,8 +522,8 @@
             <div class="cc-mid">
               <div class="cc-try">Tentativa 1/2</div>
               <div class="pa">
-                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Progresso" tabindex="0" aria-label="Progresso">P</span><span class="pa-pie">100%</span></span>
-                <span class="pa-item" style="--pct:20"><span class="lab lab-hint" data-hint="Aproveitamento" tabindex="0" aria-label="Aproveitamento">A</span><span class="pa-pie">20%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:20"><span class="lab" title="Aproveitamento: 20%">A</span><span class="pa-pie">20%</span></span>
               </div>
               <div class="cc-name" title="Avaliação_Excel (5).xlsx">Avaliação_Excel (5).xlsx</div>
               <div class="cc-type">Avaliação</div>
@@ -567,13 +572,13 @@
           <span class="chev"><i class="ui-icon icon-pointer-down" aria-hidden="true"></i></span>
         </div>
         <div class="etapa-body">
-          <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-file-xls ui-teal" aria-hidden="true"></i></div>
-            <div class="cc-mid"><div class="cc-name">Checklist - HML - Mika (4).xlsx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
+          <div class="conteudo">
+            <div class="ctico"></div>
+            <div class="cc-mid"><div class="cc-name" title="Checklist - HML - Mika (4).xlsx">Checklist - HML - Mika (4).xlsx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
           </div>
-          <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div>
-            <div class="cc-mid"><div class="cc-name">Apresentação faculdade socialização 14.07 2 (7).pptx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
+          <div class="conteudo">
+            <div class="ctico"></div>
+            <div class="cc-mid"><div class="cc-name" title="Apresentação faculdade socialização 14.07 2 (7).pptx">Apresentação faculdade socialização 14.07 2 (7).pptx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
           </div>
         </div>
       </div>
@@ -898,7 +903,29 @@
   // ── init ──
   renderChart('e2');
   document.querySelectorAll('.ctico').forEach(el=>{el.removeAttribute('style');el.innerHTML='<i class="ui-icon icon-checkbox-2026" aria-hidden="true"></i>';});
-  document.querySelectorAll('.conteudo:not(.locked)').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('checked')));
+  document.querySelectorAll('.conteudo:not(.locked)').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const wasChecked=el.classList.contains('checked');
+      el.classList.toggle('checked');
+      const isChecked=el.classList.contains('checked');
+      const status=el.querySelector('.cc-status');
+      const ccMid=el.querySelector('.cc-mid');
+      const hasPa=!!el.querySelector('.pa');
+      if(isChecked&&!wasChecked&&status?.classList.contains('muted')&&!hasPa){
+        status.textContent='Visualizado';
+        status.classList.replace('muted','approved');
+        const pa=document.createElement('div');
+        pa.className='pa pa-new';
+        pa.dataset.dynamic='1';
+        pa.innerHTML='<span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie filling">100%</span></span><span class="pa-item" style="--pct:100"><span class="lab" title="Aproveitamento: 100%">A</span><span class="pa-pie filling">100%</span></span>';
+        ccMid.insertBefore(pa,ccMid.firstChild);
+      } else if(!isChecked&&wasChecked&&status?.textContent==='Visualizado'){
+        status.textContent='Não iniciado';
+        status.classList.replace('approved','muted');
+        el.querySelector('.pa[data-dynamic]')?.remove();
+      }
+    });
+  });
   let saved='desempenho';
   try{ saved = localStorage.getItem('lector-trilhaA-tab') || 'desempenho'; }catch(e){}
   activate(saved);
