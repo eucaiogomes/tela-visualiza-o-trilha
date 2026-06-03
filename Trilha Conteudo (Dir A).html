@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/lector-icons/css/lector-icons.css">
 <style>
   :root{
     --orange:#E87722; --orange-dark:#C4611A; --orange-subtle:#FDF0E6;
@@ -25,22 +26,40 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{font-family:var(--sans);color:var(--ink);background:var(--n0);font-size:14px;-webkit-font-smoothing:antialiased;}
+  .ui-icon{display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:none;}
+  .ui-icon:before{width:auto;margin:0;}
+  .ui-teal{color:var(--teal);}
+  .ui-orange{color:var(--orange);}
+  .ui-warn{color:var(--warn);}
+  .ui-green{color:var(--green);}
+  .ui-navy{color:var(--navy);}
+  .page-loader{position:fixed;inset:0;z-index:240;background:#fff;display:flex;align-items:center;justify-content:center;transition:opacity .32s ease,visibility .32s ease;}
+  body.page-loaded .page-loader{opacity:0;visibility:hidden;pointer-events:none;}
+  .loader-atom{width:56px;height:56px;overflow:visible;}
+  .loader-atom .orbit{fill:none;stroke-linecap:round;stroke-width:5;transform-origin:50px 50px;}
+  .loader-atom .orbit-orange{stroke:#E87722;animation:atomSpin 1.15s linear infinite;}
+  .loader-atom .orbit-navy{stroke:#1C4B82;animation:atomSpinReverse 1.45s linear infinite;}
+  .loader-atom .core{fill:#1A1A1A;animation:atomPulse 1.15s ease-in-out infinite;}
+  @keyframes atomSpin{to{transform:rotate(360deg);}}
+  @keyframes atomSpinReverse{to{transform:rotate(-360deg);}}
+  @keyframes atomPulse{0%,100%{transform:scale(1);opacity:.9;}50%{transform:scale(1.18);opacity:1;}}
   .app{display:flex;height:100vh;overflow:hidden;}
   body.sidebar-collapsed .side{display:none;}
 
   /* ───── Left panel (trilha context) ───── */
   .side{width:clamp(288px,19vw,340px);flex:none;background:var(--n50);border-right:1px solid var(--n300);display:flex;flex-direction:column;}
-  .side-head{padding:14px 15px 8px;background:#ff8033;display:flex;align-items:flex-start;gap:14px;border:0;color:#fff;}
+  .side-head{padding:14px 16px 8px;background:#ff8033;display:flex;align-items:flex-start;gap:12px;border:0;color:#fff;}
   .side-head > div{order:2;min-width:0;padding-top:1px;}
   .side-head .lbl{display:none;}
-  .side-head h1{max-width:170px;font-size:18px;font-weight:700;color:#fff;margin:0;line-height:1.08;}
+  .side-head h1{max-width:170px;font-size:18px;font-weight:700;color:#fff;margin:0;line-height:1.15;}
   .closebtn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--n300);background:#fff;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.12s;}
   .closebtn:hover{border-color:var(--orange);color:var(--orange);}
   .side-head .closebtn{order:1;width:42px;height:42px;margin-top:2px;border:0;border-radius:4px;background:transparent;color:#fff;}
   .side-head .closebtn svg{width:28px;height:28px;}
+  .side-head .closebtn .ui-icon{font-size:24px;}
   .side-head .closebtn:hover{background:rgba(255,255,255,.14);color:#fff;border-color:transparent;}
 
-  .progress-box{padding:9px 15px 16px;background:#ff8033;border-bottom:0;display:block;}
+  .progress-box{padding:10px 16px 16px;background:#ff8033;border-bottom:0;display:block;}
   .progress-box .pm{display:block;margin-top:14px;}
   .progress-box .pm:first-child{margin-top:0;}
   .ring{ --p:26; width:56px;height:56px;flex:none;border-radius:50%;position:relative;
@@ -58,57 +77,71 @@
   .side-mobile-back{display:none;}
 
   .etapas{flex:1;overflow-y:auto;padding:10px 12px;}
-  .etapa{margin-bottom:8px;border:1px solid var(--n300);border-radius:var(--r-md);background:#fff;overflow:hidden;transition:border-color .12s;}
+  .etapa{margin-bottom:6px;border:1px solid var(--n300);border-radius:var(--r-md);background:#fff;overflow:hidden;transition:border-color .12s;}
   .etapa.open{border-color:var(--orange);}
-  .etapa-h{height:64px;display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;user-select:none;}
+  .etapa-h{height:64px;display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;user-select:none;}
   .etapa-h:hover{background:var(--n50);}
-  .node{width:28px;height:28px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--n400);color:var(--n600);background:#fff;}
+  .node{width:28px;height:28px;border-radius:var(--r-md);flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--n400);color:var(--n600);background:#fff;}
   .etapa.done .node{background:var(--green-light);border-color:var(--green);color:var(--green);}
   .etapa.open .node{background:var(--orange);border-color:var(--orange);color:#fff;}
   .etapa-h .name{font-size:14px;font-weight:600;color:var(--ink);}
   .eh-mid{flex:1;min-width:0;}
-  .eh-date{font-size:11px;font-weight:500;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px;}
+  .eh-date{font-size:11px;font-weight:500;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;}
   .eh-date svg{flex:none;opacity:.7;}
+  .eh-date .ui-icon{font-size:12px;opacity:.7;}
   .eh-date.none{color:var(--sub);font-style:italic;}
   .etapa.open .etapa-h .name{color:var(--orange-dark);}
   .etapa-h .chev{color:var(--sub);transition:transform .2s;}
+  .etapa-h .chev .ui-icon{font-size:14px;}
   .etapa.open .etapa-h .chev{transform:rotate(180deg);}
   .etapa-body{border-top:1px solid var(--n200);display:none;}
   .etapa.open .etapa-body{display:block;animation:fade .16s ease;}
-  .conteudo{display:flex;gap:10px;padding:10px 13px;border-bottom:1px solid var(--n100);cursor:pointer;transition:background .1s;}
+  .conteudo{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-bottom:1px solid var(--n100);cursor:pointer;transition:background .1s;}
   .conteudo:last-child{border-bottom:none;}
   .conteudo:hover{background:var(--n50);}
-  .conteudo.active{background:var(--orange-subtle);border-left:3px solid var(--orange);padding-left:10px;}
+  .conteudo.active{background:var(--orange-subtle);border-left:3px solid var(--orange);padding-left:9px;}
   .conteudo.locked{background:#f7f7f7;cursor:not-allowed;opacity:.74;}
   .conteudo.locked:hover{background:#f7f7f7;}
   .conteudo.locked .ctico{background:#eceff1!important;}
   .conteudo.locked svg{stroke:#a8adb4!important;}
   .conteudo.locked svg [fill]{fill:#a8adb4!important;}
+  .conteudo.locked .ui-icon{color:#a8adb4!important;}
   .conteudo.locked .cc-name{color:#858b94;}
   .conteudo.locked .cc-type{color:#a0a5ad;}
-  .ctico{width:28px;height:28px;border-radius:var(--r-sm);flex:none;display:flex;align-items:center;justify-content:center;}
-  .conteudo .cc-mid{flex:1;min-width:0;}
-  .conteudo .cc-name{font-size:12.5px;font-weight:500;color:var(--ink);line-height:1.3;word-break:break-word;}
+  .ctico{width:30px;height:30px;border-radius:var(--r-sm);flex:none;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+  .ctico .ui-icon{font-size:16px;}
+  .conteudo .cc-mid{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name name" "type pa" "meta meta";column-gap:10px;row-gap:4px;align-items:center;}
+  .conteudo .cc-name{grid-area:name;font-size:13px;font-weight:500;color:var(--ink);line-height:1.28;word-break:break-word;}
   .conteudo.active .cc-name{font-weight:600;}
-  .conteudo .cc-type{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sub);margin-top:3px;display:flex;align-items:center;gap:5px;}
-  .pa{display:flex;gap:8px;margin-top:5px;}
-  .pa span{font-size:11px;font-weight:700;color:var(--orange-dark);}
-  .pa span.lab{color:var(--sub);font-weight:600;}
-  .cc-status{font-size:11px;font-weight:700;margin-top:5px;line-height:1.2;}
+  .conteudo .cc-type{grid-area:type;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sub);margin-top:0;display:flex;align-items:center;gap:5px;min-width:0;}
+  .pa{grid-area:pa;display:flex;justify-content:flex-end;gap:8px;margin-top:0;align-self:center;white-space:nowrap;}
+  .pa-item{display:inline-flex;align-items:center;gap:4px;color:var(--orange-dark);}
+  .pa .lab{font-size:10px;font-weight:700;color:var(--sub);}
+  .pa-pie{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at center, var(--n0) 0 54%, transparent 56%), conic-gradient(var(--orange) calc(var(--pct,100)*1%), var(--n300) 0);color:var(--orange-dark);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:0;line-height:1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);}
+  .conteudo.active .pa-pie{background:radial-gradient(circle at center, var(--orange-subtle) 0 54%, transparent 56%), conic-gradient(var(--orange) calc(var(--pct,100)*1%), #f3c8a1 0);}
+  .conteudo.locked .pa-pie{background:radial-gradient(circle at center, #f7f7f7 0 54%, transparent 56%), conic-gradient(#a8adb4 calc(var(--pct,100)*1%), #d9dde2 0);color:#7a8089;}
+  .pa .lab-hint{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:help;outline:none;}
+  .pa .lab-hint::before,.pa .lab-hint::after{position:absolute;left:50%;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s ease,transform .12s ease,visibility .12s ease;z-index:30;}
+  .pa .lab-hint::before{content:"";bottom:calc(100% + 2px);transform:translateX(-50%) translateY(3px);border:5px solid transparent;border-top-color:#1f2937;}
+  .pa .lab-hint::after{content:attr(data-hint);bottom:calc(100% + 12px);transform:translateX(-50%) translateY(3px);background:#1f2937;color:#fff;border-radius:4px;padding:5px 7px;font-size:11px;font-weight:700;line-height:1;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.16);}
+  .pa .lab-hint:hover::before,.pa .lab-hint:hover::after,.pa .lab-hint:focus-visible::before,.pa .lab-hint:focus-visible::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);}
+  .cc-status{grid-column:1 / -1;font-size:11px;font-weight:700;margin-top:0;line-height:1.2;}
   .cc-status.approved{color:var(--green);}
   .cc-status.failed{color:#c2410c;}
   .cc-status.progress{color:var(--teal);}
   .cc-status.muted{color:var(--sub);}
   .cc-status.blocked{color:#7a8089;}
-  .cc-try{font-size:11px;font-weight:700;color:var(--sub);margin-top:5px;white-space:nowrap;}
-  .cc-meta-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:5px;}
+  .cc-try{font-size:11px;font-weight:700;color:var(--sub);margin-top:0;white-space:nowrap;}
+  .cc-meta-row{grid-area:meta;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:1px;}
   .cc-meta-row .cc-status,.cc-meta-row .cc-try{margin-top:0;}
 
   /* ───── Main column ───── */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;}
   .topbar{height:56px;flex:none;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--n300);background:#fff;}
-  .backbtn{width:38px;height:38px;border-radius:50%;border:none;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.12s;box-shadow:0 2px 6px rgba(232,119,34,.32);}
-  .backbtn:hover{background:var(--orange-dark);}
+  .btn-accent{width:38px;height:38px;border-radius:50%;border:none;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.12s;box-shadow:0 2px 6px rgba(232,119,34,.32);padding:0;}
+  .btn-accent:hover{background:var(--orange-dark);}
+  .btn-accent.center.middle{align-items:center;justify-content:center;}
+  .btn-accent[class*=" icon-"]:before{width:auto;margin:0;font-size:18px;line-height:1;}
   .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap;min-width:0;}
   .crumbs .sep{color:var(--n400);}
   .crumbs a{color:var(--muted);text-decoration:none;cursor:pointer;}
@@ -172,6 +205,7 @@
   .dd-opt .ck{opacity:0;}
   .dd-opt.is-sel .ck{opacity:1;}
   .dd-chev{transition:transform .2s;}
+  .dd-chev.ui-icon{font-size:13px;}
   .dropdown.open .dd-chev{transform:rotate(180deg);}
   .chart-hint{font-size:12px;color:var(--sub);margin-top:12px;}
 
@@ -202,6 +236,7 @@
   .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
   .tool{width:40px;height:40px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;box-shadow:0 2px 5px rgba(232,119,34,.28);}
   .tool:hover{background:var(--orange-dark);}
+  .tool .ui-icon{font-size:18px;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);padding:12px 14px;border-bottom:2px solid var(--n300);}
   th .sort{color:var(--orange);margin-left:4px;}
@@ -222,6 +257,7 @@
   .reader-back{height:34px;border:0;border-radius:18px;background:#ff8033;color:#fff;font-family:var(--sans);font-size:13px;font-weight:700;padding:0 17px 0 13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 2px 5px rgba(232,119,34,.24);}
   .reader-back:hover{background:var(--orange-dark);}
   .reader-back svg{width:17px;height:17px;flex:none;}
+  .reader-back .ui-icon{font-size:17px;}
   .reader-brand{display:none;margin-left:auto;margin-right:36px;color:#777;font-size:20px;font-weight:700;line-height:1;}
   .reader-brand em{font-size:14px;font-weight:400;font-style:italic;margin-left:2px;}
   body.certificate-reader .reader-brand{display:block;}
@@ -240,10 +276,12 @@
   .certificate-modal h3{margin:0;color:#003b79;font-size:20px;font-weight:700;line-height:1.1;}
   .certificate-close{width:28px;height:28px;border:0;background:transparent;color:#667085;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
   .certificate-close:hover{color:#1f2937;}
+  .certificate-close .ui-icon{font-size:22px;}
   .certificate-modal p{margin:0;color:#001b3f;font-size:13px;line-height:1.45;}
 
   .sidebar-toggle{position:fixed;left:14px;top:9px;z-index:80;width:38px;height:38px;border:0;border-radius:50%;background:#ff8033;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(232,119,34,.32);cursor:pointer;}
   .sidebar-toggle:hover{background:var(--orange-dark);}
+  .sidebar-toggle .ui-icon{font-size:24px;}
   body.sidebar-collapsed .sidebar-toggle{display:flex;}
   body.sidebar-collapsed .topbar{padding-left:64px;}
   body.reader-open .sidebar-toggle{display:none;}
@@ -281,7 +319,7 @@
     .etapas{flex:1;max-height:none;overflow-y:auto;padding:10px 12px 12px;}
     .main{flex:none;min-height:0;background:#fff;}
     .topbar{position:sticky;top:0;z-index:30;padding:0 14px;}
-    .topbar .backbtn,.crumbs{display:none;}
+    .topbar .btn-accent,.crumbs{display:none;}
     .mobile-trail-hero{display:block;margin:14px 14px 0;padding:18px 16px 16px;border-radius:8px;background:#ff8033;color:#fff;box-shadow:0 2px 7px rgba(232,119,34,.22);}
     .mobile-trail-hero h1{margin:0 0 14px;font-size:21px;font-weight:700;line-height:1.12;color:#fff;}
     .mobile-continue-btn{width:100%;height:40px;border:1px solid rgba(255,255,255,.5);border-radius:6px;background:#fff;color:var(--orange-dark);font-family:var(--sans);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;}
@@ -326,14 +364,15 @@
     .side-head{gap:8px;}
     .side-head .closebtn{width:36px;height:36px;}
     .side-head .closebtn svg{width:24px;height:24px;}
+    .side-head .closebtn .ui-icon{font-size:22px;}
     .side-head h1{font-size:17px;}
     .progress-box{grid-template-columns:1fr;gap:12px;padding-bottom:14px;}
     .side-finish{margin-top:0;}
     .etapas{max-height:none;padding:8px;}
     .etapa-h{height:64px;padding:11px;}
-    .conteudo{align-items:flex-start;padding:10px;}
+    .conteudo{padding:10px;}
     .topbar{height:52px;gap:10px;padding:0 10px;}
-    .backbtn{width:34px;height:34px;}
+    .btn-accent{width:34px;height:34px;}
     .crumbs{font-size:12px;}
     .topbar-actions{gap:10px;}
     .iconbtn{display:none;}
@@ -358,7 +397,7 @@
     .conteudo{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px 9px;}
     .conteudo .ctico{grid-column:1;grid-row:1;}
     .conteudo .cc-mid{grid-column:2;grid-row:1;min-width:0;}
-    .pa{flex-wrap:wrap;gap:4px 8px;}
+    .pa{flex-wrap:wrap;gap:3px 8px;}
     .trail-summary{grid-template-columns:56px minmax(0,1fr);gap:10px 12px;}
     .trail-progress{width:56px;height:56px;}
     .trail-copy h2{font-size:16px;}
@@ -366,6 +405,13 @@
 </style>
 </head>
 <body>
+<div class="page-loader" id="pageLoader" role="status" aria-label="Carregando">
+  <svg class="loader-atom" viewBox="0 0 100 100" aria-hidden="true">
+    <ellipse class="orbit orbit-orange" cx="50" cy="50" rx="34" ry="12" transform="rotate(26 50 50)"/>
+    <ellipse class="orbit orbit-navy" cx="50" cy="50" rx="34" ry="12" transform="rotate(-55 50 50)"/>
+    <circle class="core" cx="50" cy="50" r="5"/>
+  </svg>
+</div>
 <div class="app">
 
   <!-- ───────── LEFT PANEL ───────── -->
@@ -376,7 +422,7 @@
         <h1>Trilha Completa Automação</h1>
       </div>
       <button class="closebtn" title="Sair da trilha" aria-label="Sair">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <i class="ui-icon icon-close" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -395,7 +441,7 @@
     </div>
 
     <button class="side-mobile-back" type="button" aria-label="Voltar">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="11 17 6 12 11 7"/><path d="M18 12H6"/></svg>
+      <i class="ui-icon icon-arrow-left" aria-hidden="true"></i>
       <span>Voltar</span>
     </button>
 
@@ -406,17 +452,20 @@
           <div class="node">1</div>
           <div class="eh-mid">
             <div class="name">Etapa 1</div>
-            <div class="eh-date"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>Acesso · 14/06/2026 11:45</div>
+            <div class="eh-date"><i class="ui-icon icon-clock" aria-hidden="true"></i>Acesso · 14/06/2026 11:45</div>
           </div>
-          <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg></span>
+          <span class="chev"><i class="ui-icon icon-pointer-down" aria-hidden="true"></i></span>
         </div>
         <div class="etapa-body">
           <div class="conteudo" data-open-pdf="uploads/manual-minha-area.pdf" role="button" tabindex="0">
-            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-pdf ui-teal" aria-hidden="true"></i></div>
             <div class="cc-mid">
               <div class="cc-name">Conteúdo 1 — Manual Minha área.pdf</div>
               <div class="cc-type">Documento</div>
-              <div class="pa"><span><span class="lab">P</span> 100%</span><span><span class="lab">A</span> 100%</span></div>
+              <div class="pa">
+                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Progresso" tabindex="0" aria-label="Progresso">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Aproveitamento" tabindex="0" aria-label="Aproveitamento">A</span><span class="pa-pie">100%</span></span>
+              </div>
               <div class="cc-meta-row"><div class="cc-status approved">Aprovado</div><div class="cc-try">Tentativa 1/2</div></div>
             </div>
           </div>
@@ -430,32 +479,35 @@
           <div class="eh-mid">
             <div class="name">Etapa 2</div>
           </div>
-          <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg></span>
+          <span class="chev"><i class="ui-icon icon-pointer-down" aria-hidden="true"></i></span>
         </div>
         <div class="etapa-body">
           <div class="conteudo active" data-open-video="uploads/linguagens-programacao.mp4" role="button" tabindex="0">
-            <div class="ctico" style="background:var(--orange-subtle)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="var(--orange)"/></svg></div>
+            <div class="ctico" style="background:var(--orange-subtle)"><i class="ui-icon icon-play-media ui-orange" aria-hidden="true"></i></div>
             <div class="cc-mid">
               <div class="cc-name">Conteúdo 2 — Linguagens de Programação</div>
               <div class="cc-type">Vídeo</div>
-              <div class="pa"><span><span class="lab">P</span> 100%</span><span><span class="lab">A</span> 100%</span></div>
+              <div class="pa">
+                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Progresso" tabindex="0" aria-label="Progresso">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab lab-hint" data-hint="Aproveitamento" tabindex="0" aria-label="Aproveitamento">A</span><span class="pa-pie">100%</span></span>
+              </div>
               <div class="cc-meta-row"><div class="cc-status progress">Em andamento</div><div class="cc-try">Tentativa 2/3</div></div>
             </div>
           </div>
           <div class="conteudo">
-            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-png ui-teal" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">qrcode lista de presença — Presencial.png</div><div class="cc-type">Documento</div><div class="cc-status muted">Não visualizado</div></div>
           </div>
           <div class="conteudo">
-            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-pdf ui-teal" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">Manual Lector 2026/02 — Social.pdf</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
           </div>
           <div class="conteudo">
-            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-pdf ui-teal" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">Menu validação de termos — Trilhas.pdf</div><div class="cc-type">Documento</div><div class="cc-status muted">Não visualizado</div></div>
           </div>
           <div class="conteudo">
-            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div>
+            <div class="ctico" style="background:var(--warn-light)"><i class="ui-icon icon-file-xls ui-warn" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">Avaliação_Excel (5).xlsx</div><div class="cc-type">Avaliação</div><div class="cc-meta-row"><div class="cc-status failed">Reprovado</div><div class="cc-try">Tentativa 1/2</div></div></div>
           </div>
         </div>
@@ -467,25 +519,25 @@
           <div class="node">3</div>
           <div class="eh-mid">
             <div class="name">Etapa 3</div>
-            <div class="eh-date"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>Acesso · 18/06/2026 09:20</div>
+            <div class="eh-date"><i class="ui-icon icon-clock" aria-hidden="true"></i>Acesso · 18/06/2026 09:20</div>
           </div>
-          <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg></span>
+          <span class="chev"><i class="ui-icon icon-pointer-down" aria-hidden="true"></i></span>
         </div>
         <div class="etapa-body">
           <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div>
+            <div class="ctico" style="background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">todas na mesma página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
           </div>
           <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div>
+            <div class="ctico" style="background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">uma por página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
           </div>
           <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div>
+            <div class="ctico" style="background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">Reação uma por página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
           </div>
           <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div>
+            <div class="ctico" style="background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">Reação todas em uma página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
           </div>
         </div>
@@ -497,11 +549,11 @@
           <div class="eh-mid">
             <div class="name">Etapa 4</div>
           </div>
-          <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg></span>
+          <span class="chev"><i class="ui-icon icon-pointer-down" aria-hidden="true"></i></span>
         </div>
         <div class="etapa-body">
           <div class="conteudo locked" aria-disabled="true">
-            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-file-xls ui-teal" aria-hidden="true"></i></div>
             <div class="cc-mid"><div class="cc-name">Checklist - HML - Mika (4).xlsx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
           </div>
           <div class="conteudo locked" aria-disabled="true">
@@ -516,9 +568,7 @@
   <!-- ───────── MAIN ───────── -->
   <div class="main">
     <div class="topbar">
-      <button class="backbtn" title="Voltar" aria-label="Voltar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><path d="M18 12H6"/></svg>
-      </button>
+      <button id="hideResource" ng-if="!showFinishtrail()" ng-click="hideResource()" class="btn-accent icon-undo center middle ng-scope" title="Voltar" aria-label="Voltar"></button>
       <nav class="crumbs">
         <a>Vitrine</a><span class="sep">›</span>
         <a>Teste Automação</a><span class="sep">›</span>
@@ -533,7 +583,7 @@
         <h1>Trilha Completa Automação</h1>
         <button class="mobile-continue-btn" type="button" data-open-video="uploads/linguagens-programacao.mp4">
           <span>Continuar de onde parou</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          <i class="ui-icon icon-arrow-right" aria-hidden="true"></i>
         </button>
       </section>
       <div class="tabs">
@@ -557,7 +607,7 @@
             <div class="dropdown" id="etapaFilter">
               <button class="selpill on" id="filterTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span id="filterLabel">Etapa 2</span>
-                <svg class="dd-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg>
+                <i class="ui-icon icon-pointer-down dd-chev" aria-hidden="true"></i>
               </button>
               <div class="dropdown-menu" id="filterMenu" role="listbox">
                 <div class="dd-opt" data-key="all" role="option">Todas as etapas <span class="ck">✓</span></div>
@@ -595,11 +645,11 @@
       <section class="panel" data-panel="relatorios">
         <div class="toolbar">
           <div class="tool" title="Filtros"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
-          <div class="tool" title="Copiar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
-          <div class="tool" title="Exportar Excel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg></div>
-          <div class="tool" title="Exportar CSV"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
-          <div class="tool" title="Exportar PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-          <div class="tool" title="Imprimir"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+          <div class="tool" title="Copiar"><i class="ui-icon icon-copy" aria-hidden="true"></i></div>
+          <div class="tool" title="Exportar Excel"><i class="ui-icon icon-file-xls" aria-hidden="true"></i></div>
+          <div class="tool" title="Exportar CSV"><i class="ui-icon icon-file-csv" aria-hidden="true"></i></div>
+          <div class="tool" title="Exportar PDF"><i class="ui-icon icon-pdf" aria-hidden="true"></i></div>
+          <div class="tool" title="Imprimir"><i class="ui-icon icon-printer" aria-hidden="true"></i></div>
         </div>
         <div class="card" style="overflow:hidden;">
           <table>
@@ -631,7 +681,7 @@
 <section class="reader-screen" aria-label="Leitor de PDF">
   <div class="reader-top">
     <button class="reader-back" type="button" id="readerBack" aria-label="Voltar para a trilha">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      <i class="ui-icon icon-arrow-left" aria-hidden="true"></i>
       <span>Voltar para a trilha</span>
     </button>
     <div class="reader-brand" aria-hidden="true">Lector<em>live</em></div>
@@ -647,7 +697,7 @@
     <div class="certificate-modal-head">
       <h3 id="certificateTitle">Certificado</h3>
       <button class="certificate-close" type="button" id="certificateClose" aria-label="Fechar">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <i class="ui-icon icon-close" aria-hidden="true"></i>
       </button>
     </div>
     <p>Aguarde enquanto seu certificado está sendo gerado.</p>
@@ -655,10 +705,14 @@
 </div>
 
 <button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Mostrar menu da trilha">
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="7" x2="19" y2="7"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="17" x2="19" y2="17"/></svg>
+  <i class="ui-icon icon-menu-burger" aria-hidden="true"></i>
 </button>
 
 <script>
+  window.addEventListener('load',()=>{
+    window.setTimeout(()=>document.body.classList.add('page-loaded'), 650);
+  });
+
   // ── tab switching ──
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.panel');

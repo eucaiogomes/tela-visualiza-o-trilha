@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/lector-icons/css/lector-icons.css">
 <style>
   :root{
     --orange:#E87722; --orange-dark:#C4611A; --orange-subtle:#FDF0E6;
@@ -25,6 +26,13 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
   body{font-family:var(--sans);color:var(--ink);background:var(--n100);font-size:14px;-webkit-font-smoothing:antialiased;}
+  .ui-icon{display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:none;}
+  .ui-icon:before{width:auto;margin:0;}
+  .ui-teal{color:var(--teal);}
+  .ui-orange{color:var(--orange);}
+  .ui-warn{color:var(--warn);}
+  .ui-green{color:var(--green);}
+  .ui-navy{color:var(--navy);}
   .app{display:flex;height:100vh;background:var(--n0);overflow:hidden;}
 
   /* ───── Left rail (hover to expand) ───── */
@@ -38,6 +46,7 @@
   .closebtn{ width:40px;height:40px;border-radius:50%;background:var(--orange);color:#fff;border:none;cursor:pointer;
     display:flex;align-items:center;justify-content:center; box-shadow:0 2px 6px rgba(232,119,34,.35); transition:background .12s;}
   .closebtn:hover{background:var(--orange-dark);}
+  .closebtn .ui-icon{font-size:22px;}
   .rail-title{ padding:14px 18px 6px; opacity:0; transition:opacity .15s; white-space:nowrap; }
   .rail:hover .rail-title{opacity:1;}
   .rail-title .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);}
@@ -50,6 +59,7 @@
   .step.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);}
   .node{ width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
     font-size:14px;font-weight:700;border:2px solid var(--n400);color:var(--n600);background:#fff;}
+  .node .ui-icon{font-size:14px;}
   .step.done .node{ background:var(--green-light); border-color:var(--green); color:var(--green);}
   .step.active .node{ background:var(--orange); border-color:var(--orange); color:#fff;}
   .step-text{ opacity:0; transition:opacity .15s; white-space:nowrap; }
@@ -62,6 +72,7 @@
   .rail-foot span{opacity:0;transition:opacity .15s;font-size:13px;white-space:nowrap;}
   .rail:hover .rail-foot span{opacity:1;}
   .chev-exp{transition:transform .22s;}
+  .chev-exp.ui-icon{font-size:18px;}
   .rail:hover .chev-exp{transform:rotate(180deg);}
 
   /* ───── Main column ───── */
@@ -70,9 +81,11 @@
     height:56px;flex:none;display:flex;align-items:center;gap:14px;
     padding:0 24px;border-bottom:1px solid var(--n300);background:#fff;
   }
-  .backbtn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--orange);background:#fff;color:var(--orange);
+  .btn-accent{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--orange);background:#fff;color:var(--orange);
     display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.12s;}
-  .backbtn:hover{background:var(--orange-subtle);}
+  .btn-accent:hover{background:var(--orange-subtle);}
+  .btn-accent.center.middle{align-items:center;justify-content:center;}
+  .btn-accent[class*=" icon-"]:before{width:auto;margin:0;font-size:18px;line-height:1;}
   .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap;min-width:0;}
   .crumbs .sep{color:var(--n400);}
   .crumbs a{color:var(--muted);text-decoration:none;cursor:pointer;}
@@ -81,6 +94,7 @@
   .topbar-actions{margin-left:auto;display:flex;align-items:center;gap:16px;}
   .iconbtn{color:var(--sub);cursor:pointer;display:flex;}
   .iconbtn:hover{color:var(--muted);}
+  .iconbtn .ui-icon{font-size:18px;}
   .avatar{width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;cursor:pointer;}
 
   .scroll{flex:1;overflow-y:auto;}
@@ -113,6 +127,7 @@
   .btn.primary:hover{background:var(--orange-dark);}
   .btn.outline{background:#fff;color:var(--orange);border:1.5px solid var(--orange);}
   .btn.outline:hover{background:var(--orange-subtle);}
+  .btn .ui-icon{font-size:16px;}
 
   /* ───── KPI cards ───── */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;}
@@ -132,6 +147,7 @@
   .card-head h3{font-size:16px;font-weight:600;margin:0;color:var(--ink);}
   .card-body{padding:18px;}
   .selpill{font-size:12px;font-weight:600;color:var(--muted);background:var(--n100);border:1px solid var(--n300);border-radius:var(--r-sm);padding:5px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+  .selpill .ui-icon{font-size:13px;}
 
   /* chart */
   .chart-wrap{display:flex;gap:10px;}
@@ -152,6 +168,7 @@
   .citem{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--n200);}
   .citem:last-child{border-bottom:none;}
   .ctico{width:34px;height:34px;border-radius:var(--r-sm);flex:none;display:flex;align-items:center;justify-content:center;}
+  .ctico .ui-icon{font-size:20px;}
   .ctmid{flex:1;min-width:0;}
   .ctmid .ctt{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ctmid .cty{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin-bottom:2px;}
@@ -159,6 +176,7 @@
   .badge.done{background:var(--green-light);color:var(--success);}
   .badge.todo{background:var(--orange-subtle);color:var(--orange-dark);}
   .badge.locked{background:var(--n100);color:var(--n500);display:inline-flex;align-items:center;gap:5px;}
+  .badge .ui-icon{font-size:11px;}
 
   /* ───── Descrição panel ───── */
   .desc{max-width:720px;}
@@ -173,6 +191,7 @@
   .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
   .tool{width:40px;height:40px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;box-shadow:0 2px 5px rgba(232,119,34,.28);}
   .tool:hover{background:var(--orange-dark);}
+  .tool .ui-icon{font-size:18px;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);padding:12px 14px;border-bottom:2px solid var(--n300);}
   th .sort{color:var(--orange);margin-left:4px;}
@@ -181,6 +200,7 @@
   td.a-good{color:var(--success);font-weight:600;}
   td.a-zero{color:var(--n500);}
   .ct-inline{display:flex;align-items:center;gap:10px;}
+  .ct-inline .ctico .ui-icon{font-size:15px;}
   .ct-inline a{color:var(--orange);text-decoration:none;}
   .ct-inline a:hover{text-decoration:underline;}
 
@@ -198,7 +218,7 @@
   <aside class="rail" aria-label="Etapas da trilha">
     <div class="rail-top">
       <button class="closebtn" title="Sair da trilha" aria-label="Sair da trilha">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <i class="ui-icon icon-close" aria-hidden="true"></i>
       </button>
     </div>
     <div class="rail-title">
@@ -207,7 +227,7 @@
     </div>
     <div class="steps">
       <div class="step done" title="Etapa 1">
-        <div class="node"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg></div>
+        <div class="node"><i class="ui-icon icon-checked" aria-hidden="true"></i></div>
         <div class="step-text"><div class="et">Etapa 1</div><div class="meta">6 conteúdos · concluída</div></div>
       </div>
       <div class="step active" title="Etapa 2 — atual">
@@ -224,7 +244,7 @@
       </div>
     </div>
     <div class="rail-foot" title="Expandir">
-      <svg class="chev-exp" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,18 15,12 9,6"/></svg>
+      <i class="ui-icon icon-right-open chev-exp" aria-hidden="true"></i>
       <span>Recolher etapas</span>
     </div>
   </aside>
@@ -232,9 +252,7 @@
   <!-- ───────── MAIN ───────── -->
   <div class="main">
     <div class="topbar">
-      <button class="backbtn" title="Voltar" aria-label="Voltar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><path d="M18 12H6"/></svg>
-      </button>
+      <button id="hideResource" ng-if="!showFinishtrail()" ng-click="hideResource()" class="btn-accent icon-undo center middle ng-scope" title="Voltar" aria-label="Voltar"></button>
       <nav class="crumbs">
         <a>Vitrine</a><span class="sep">›</span>
         <a>Teste Automação</a><span class="sep">›</span>
@@ -244,7 +262,7 @@
       </nav>
       <div class="topbar-actions">
         <span class="iconbtn" title="Buscar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <span class="iconbtn" title="Notificações"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18,8A6,6,0,0,0,6,8c0,7-3,9-3,9H21s-3-2-3-9"/><path d="M13.73,21a2,2,0,0,1-3.46,0"/></svg></span>
+        <span class="iconbtn" title="Notificações"><i class="ui-icon icon-bell" aria-hidden="true"></i></span>
         <div class="avatar">P</div>
       </div>
     </div>
@@ -273,7 +291,7 @@
           </div>
           <button class="btn primary">
             Continuar de onde parei
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <i class="ui-icon icon-arrow-right" aria-hidden="true"></i>
           </button>
         </div>
 
@@ -290,7 +308,7 @@
             <div class="card-head">
               <h3>Aproveitamento por etapa</h3>
               <span class="selpill">Todas as etapas
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"/></svg>
+                <i class="ui-icon icon-pointer-down" aria-hidden="true"></i>
               </span>
             </div>
             <div class="card-body">
@@ -318,24 +336,24 @@
             <div class="card-body" style="padding-top:6px;padding-bottom:6px;">
               <div class="clist">
                 <div class="citem">
-                  <div class="ctico" style="background:var(--orange-subtle)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="var(--orange)"/></svg></div>
+                  <div class="ctico" style="background:var(--orange-subtle)"><i class="ui-icon icon-play-media ui-orange" aria-hidden="true"></i></div>
                   <div class="ctmid"><div class="cty">Vídeo</div><div class="ctt">Introdução à Automação de Processos</div></div>
                   <span class="badge done">100%</span>
                 </div>
                 <div class="citem">
-                  <div class="ctico" style="background:var(--teal-light)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+                  <div class="ctico" style="background:var(--teal-light)"><i class="ui-icon icon-pdf ui-teal" aria-hidden="true"></i></div>
                   <div class="ctmid"><div class="cty">Documentos</div><div class="ctt">Manual Lector 2026/02 — Social.pdf</div></div>
                   <span class="badge todo">Continuar</span>
                 </div>
                 <div class="citem">
-                  <div class="ctico" style="background:var(--warn-light)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div>
+                  <div class="ctico" style="background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div>
                   <div class="ctmid"><div class="cty">Avaliação</div><div class="ctt">Prova de Conhecimentos — Etapa 2</div></div>
                   <span class="badge todo">A fazer</span>
                 </div>
                 <div class="citem">
-                  <div class="ctico" style="background:var(--green-light)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88"/></svg></div>
+                  <div class="ctico" style="background:var(--green-light)"><i class="ui-icon icon-certificate ui-green" aria-hidden="true"></i></div>
                   <div class="ctmid"><div class="cty">Certificado</div><div class="ctt">Emissão de Certificado</div></div>
-                  <span class="badge locked"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7,11V7a5,5,0,0,1,10,0v4"/></svg>Bloqueado</span>
+                  <span class="badge locked"><i class="ui-icon icon-lock-closed" aria-hidden="true"></i>Bloqueado</span>
                 </div>
               </div>
             </div>
@@ -351,7 +369,7 @@
           <p>O aproveitamento mínimo exigido para aprovação é de <strong>20%</strong>, e a carga horária total estimada é de <strong>6 horas</strong>. O progresso é registrado automaticamente à medida que cada conteúdo é concluído.</p>
           <h3 style="font-size:18px;font-weight:600;margin:24px 0 12px;color:var(--ink);">Etapas</h3>
           <div class="etapa-overview">
-            <div class="eo-card"><div class="node" style="background:var(--green-light);border-color:var(--green);color:var(--green)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg></div><div><div class="eo-t">Etapa 1 — Fundamentos</div><div class="eo-m">6 conteúdos · concluída</div></div></div>
+            <div class="eo-card"><div class="node" style="background:var(--green-light);border-color:var(--green);color:var(--green)"><i class="ui-icon icon-checked" aria-hidden="true"></i></div><div><div class="eo-t">Etapa 1 — Fundamentos</div><div class="eo-m">6 conteúdos · concluída</div></div></div>
             <div class="eo-card" style="border-color:var(--orange);background:var(--orange-subtle)"><div class="node" style="background:var(--orange);border-color:var(--orange);color:#fff">2</div><div><div class="eo-t">Etapa 2 — Ferramentas</div><div class="eo-m">2 de 4 concluídos · atual</div></div></div>
             <div class="eo-card"><div class="node">3</div><div><div class="eo-t">Etapa 3 — Práticas</div><div class="eo-m">5 conteúdos</div></div></div>
             <div class="eo-card"><div class="node">4</div><div><div class="eo-t">Etapa 4 — Avaliação final</div><div class="eo-m">8 conteúdos</div></div></div>
@@ -363,11 +381,11 @@
       <section class="panel" data-panel="relatorios">
         <div class="toolbar">
           <div class="tool" title="Filtros"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
-          <div class="tool" title="Copiar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
-          <div class="tool" title="Exportar Excel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg></div>
-          <div class="tool" title="Exportar CSV"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
-          <div class="tool" title="Exportar PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-          <div class="tool" title="Imprimir"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+          <div class="tool" title="Copiar"><i class="ui-icon icon-copy" aria-hidden="true"></i></div>
+          <div class="tool" title="Exportar Excel"><i class="ui-icon icon-file-xls" aria-hidden="true"></i></div>
+          <div class="tool" title="Exportar CSV"><i class="ui-icon icon-file-csv" aria-hidden="true"></i></div>
+          <div class="tool" title="Exportar PDF"><i class="ui-icon icon-pdf" aria-hidden="true"></i></div>
+          <div class="tool" title="Imprimir"><i class="ui-icon icon-printer" aria-hidden="true"></i></div>
         </div>
         <div class="card" style="overflow:hidden;">
           <table>
@@ -380,13 +398,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div><span>Conteúdo 1 — <a>Manual Lector 2026/01 — Minha área.pdf</a></span></div></td><td class="a-good">100,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><i class="ui-icon icon-pdf ui-teal" aria-hidden="true"></i></div><span>Conteúdo 1 — <a>Manual Lector 2026/01 — Minha área.pdf</a></span></div></td><td class="a-good">100,00%</td><td>—</td><td>—</td></tr>
               <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div><span>Conteúdo 2 — <a>Linguagens-de-Programacao (2).webp</a></span></div></td><td class="a-good">100,00%</td><td>—</td><td>—</td></tr>
-              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div><span>Conteúdo 3 — <a>qrcode lista de presença — Presencial.png</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
-              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14,2H6a2,2,0,0,0-2,2v16a2,2,0,0,0,2,2h12a2,2,0,0,0,2-2V8Z"/><polyline points="14,2 14,8 20,8"/></svg></div><span>Conteúdo 4 — <a>Manual Lector 2026/02 — Social.pdf</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
-              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--orange-subtle)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="var(--orange)"/></svg></div><span>Conteúdo 5 — <a>Treinamento Trilha Automação 1</a></span></div></td><td class="a-zero">0,00%</td><td>01:30:00</td><td>—</td></tr>
-              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--warn-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div><span>Conteúdo 6 — <a>todas na mesma página Thiago</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
-              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--warn-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5a2,2,0,0,1,2-2h11"/></svg></div><span>Conteúdo 7 — <a>uma por página Thiago</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><i class="ui-icon icon-png ui-teal" aria-hidden="true"></i></div><span>Conteúdo 3 — <a>qrcode lista de presença — Presencial.png</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--teal-light)"><i class="ui-icon icon-pdf ui-teal" aria-hidden="true"></i></div><span>Conteúdo 4 — <a>Manual Lector 2026/02 — Social.pdf</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--orange-subtle)"><i class="ui-icon icon-play-media ui-orange" aria-hidden="true"></i></div><span>Conteúdo 5 — <a>Treinamento Trilha Automação 1</a></span></div></td><td class="a-zero">0,00%</td><td>01:30:00</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div><span>Conteúdo 6 — <a>todas na mesma página Thiago</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--warn-light)"><i class="ui-icon icon-questions ui-warn" aria-hidden="true"></i></div><span>Conteúdo 7 — <a>uma por página Thiago</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
               <tr><td><div class="ct-inline"><div class="ctico" style="width:26px;height:26px;background:var(--navy-light)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21,16V8a2,2,0,0,0-1-1.73l-7-4a2,2,0,0,0-2,0l-7,4A2,2,0,0,0,3,8v8a2,2,0,0,0,1,1.73l7,4a2,2,0,0,0,2,0l7-4A2,2,0,0,0,21,16z"/></svg></div><span>Conteúdo 8 — <a>Apresentação faculdade 14.07.pptx</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
             </tbody>
           </table>
