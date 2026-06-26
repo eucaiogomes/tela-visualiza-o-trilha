@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Certificado — Trilha Completa Automação</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, Arial, Helvetica, sans-serif; color: #111; background: #f4f4f4; padding: 20px; }
+  .page {
+    width: 297mm; height: 210mm; position: relative; overflow: hidden; background: #fff;
+    margin: 0 auto 30px; box-shadow: 0 10px 40px rgba(0,0,0,.18);
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+  .frame {
+    position: absolute; inset: 16mm 16mm 14mm;
+    background: #fff; display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .orange { position: absolute; background: #F5822A; }
+  .blue { position: absolute; background: #1F4B83; }
+  .tl { left:-30mm; top:-34mm; width:120mm; height:78mm; border-radius: 0 0 70mm 0; }
+  .tr { right:-34mm; top:-18mm; width:92mm; height:58mm; border-radius: 0 0 0 70mm; }
+  .br { right:-28mm; bottom:-28mm; width:104mm; height:72mm; border-radius:70mm 0 0 0; }
+  .bl { left:-34mm; bottom:-30mm; width:100mm; height:66mm; border-radius:0 70mm 0 0; }
+  .blue.tl2 { left:30mm; top:-34mm; width:92mm; height:52mm; transform:skewX(-10deg); }
+  .blue.br2 { right:-18mm; top:78mm; width:40mm; height:86mm; border-radius:20mm 0 0 20mm; }
+  .blue.bl2 { left:-18mm; bottom:12mm; width:42mm; height:62mm; border-radius:0 24mm 24mm 0; }
+  .dot { position:absolute; width:2.2mm; height:2.2mm; border-radius:50%; background:#fff; }
+  .line { position:absolute; width:28mm; height:1.2mm; background:#1F4B83; }
+  .logo {
+    width: 68mm; margin-top: 28mm; margin-bottom: 16mm;
+    font-size: 32px; font-weight: 900; letter-spacing: -.5px; color: #1F4B83;
+  }
+  .watermark { position:absolute; left:58mm; top:82mm; font-size:72mm; font-weight:800; color:#1F4B83; opacity:.14; letter-spacing:-3.5mm; }
+  .watermark-live { position:absolute; right:53mm; top:125mm; font-size:22mm; font-style:italic; color:#F5822A; opacity:.2; }
+  .content { position:relative; z-index:2; font-size:7.2mm; line-height:1.55; width:210mm; margin-top:2mm; }
+  .course { font-size:8.5mm; font-weight:700; margin: 8mm 0 4mm; }
+  .signatures {
+    position:absolute; left:66mm; right:66mm; bottom:28mm; display:flex; justify-content:space-between; gap:24mm; z-index:2;
+  }
+  .sig { width:70mm; text-align:center; font-size:4mm; font-weight:700; }
+  .sig .bar { height:.45mm; background:#555; margin-bottom:2mm; }
+  .sig small { display:block; font-size:2.6mm; font-weight:400; color:#888; margin-top:1mm; }
+  .page2 .frame { align-items:flex-start; text-align:left; padding:24mm 30mm; }
+  .page2 h1 { font-size:12mm; color:#1F4B83; margin:0 0 12mm; }
+  .page2 p { font-size:5mm; line-height:1.65; margin:0 0 5mm; }
+  .box {
+    margin-top:10mm; border:1px solid #ddd; border-radius:4mm; padding:10mm; width:100%;
+    display:grid; grid-template-columns:1fr 1fr; gap:8mm;
+  }
+  .field span { display:block; font-size:3.5mm; color:#777; text-transform:uppercase; letter-spacing:.04em; margin-bottom:1mm; }
+  .field b { font-size:5mm; }
+  .print-btn {
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:50;
+    background:#E87722; color:#fff; border:0; padding:11px 24px; border-radius:999px;
+    font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 4px 14px rgba(232,119,34,.3);
+  }
+  @media print {
+    body { background:#fff; padding:0; }
+    .page { box-shadow:none; margin:0; }
+    .print-btn { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="orange tl"></div><div class="orange tr"></div><div class="orange br"></div><div class="orange bl"></div>
+  <div class="blue tl2"></div><div class="blue br2"></div><div class="blue bl2"></div>
+  <span class="dot" style="left:128mm;top:28mm"></span><span class="dot" style="left:139mm;top:27mm"></span><span class="dot" style="left:150mm;top:25mm"></span>
+  <span class="dot" style="right:36mm;top:100mm"></span><span class="dot" style="right:34mm;top:114mm"></span><span class="dot" style="right:31mm;top:126mm"></span>
+  <span class="line" style="right:18mm;top:28mm"></span><span class="line" style="right:26mm;top:38mm"></span>
+  <span class="line" style="left:18mm;top:86mm"></span><span class="line" style="right:18mm;bottom:24mm"></span><span class="line" style="right:26mm;bottom:34mm"></span>
+
+  <div class="frame">
+    <div class="logo">Lector</div>
+    <div class="watermark">Lector</div>
+    <div class="watermark-live">live</div>
+    <div class="content">
+      <div>O aluno <strong>Caio gomes</strong> concluiu o treinamento</div>
+      <div class="course">Trilha Completa Automação,</div>
+      <div>com aproveitamento de <strong>100.00%</strong></div>
+      <div style="margin-top:8mm;">no dia <strong>02 de junho de 2026.</strong></div>
+    </div>
+    <div class="signatures">
+      <div class="sig">
+        <div style="height:15mm"></div>
+        <div class="bar"></div>
+        <strong>Caio gomes</strong>
+      </div>
+      <div class="sig">
+        <div style="height:15mm;font-family:cursive;font-size:15mm;color:#444;line-height:14mm">Lector</div>
+        <div class="bar"></div>
+        <strong>CARLOS EDUARDO DONINI</strong>
+        <small>TREINAMENTOS</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page page2">
+  <div class="orange tr"></div>
+  <div class="blue bl2"></div>
+  <div class="frame">
+    <div style="font-size:26px;font-weight:800;color:#1F4B83;margin-bottom:14mm">Lector</div>
+    <h1>Validação do certificado</h1>
+    <p>Este certificado foi emitido para comprovar a conclusão da trilha no ambiente de treinamento.</p>
+    <p>Guarde este documento para consulta e conferência das informações de conclusão.</p>
+
+    <div class="box">
+      <div class="field"><span>Aluno</span><b>Caio gomes</b></div>
+      <div class="field"><span>Trilha</span><b>Trilha Completa Automação</b></div>
+      <div class="field"><span>Progresso</span><b>100%</b></div>
+      <div class="field"><span>Aproveitamento</span><b>100.00%</b></div>
+      <div class="field"><span>Data de emissão</span><b>02/06/2026</b></div>
+      <div class="field"><span>Status</span><b>Concluído</b></div>
+    </div>
+  </div>
+</div>
+
+<button onclick="window.print()" class="print-btn">Imprimir / Salvar PDF</button>
+
+<script>
+// Keyboard support
+document.addEventListener('keydown', function(e){
+  if (e.key.toLowerCase() === 'p' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    window.print();
+  }
+});
+</script>
+</body>
+</html>

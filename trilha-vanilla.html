@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trilha • Visualização (Vanilla • Zero Deps)</title>
+<!--
+  TRILHA VIEWER - 100% VANILLA, ZERO DEPENDENCIES
+  - Copie este arquivo único para qualquer projeto
+  - Funciona offline, sem node, sem build, sem libs
+  - Ícones: sprite SVG embutido
+  - Fontes: system stack
+  - Player de vídeo: custom puro (sempre funciona) + fallback native <video>
+  - Leitor PDF: HTML simulado puro
+  - Todos os comportamentos do original replicados
+
+  Componentes principais (fáceis de extrair):
+  - .side + .etapas (lista de etapas + accordion)
+  - .kpis + .chart-wrap (gráfico + filtro)
+  - .reader-screen (leitor modal)
+  - .pa-pie (mini donuts de progresso/aproveitamento)
+-->
+
+<style>
+  :root{
+    --orange:#E87722; --orange-dark:#C4611A; --orange-subtle:#FDF0E6;
+    --teal:#1B8CA6; --teal-light:#E4F4F8;
+    --green:#3D8A52; --green-light:#EAF6EE; --success:#2E7D32;
+    --navy:#1C4B82; --navy-light:#E4EBF5;
+    --warn:#B45309; --warn-light:#FEF8EC;
+    --n0:#fff; --n50:#F9F9F9; --n100:#F5F5F5; --n200:#EBEBEB; --n300:#E0E0E0;
+    --n400:#CCCCCC; --n500:#999999; --n600:#666666; --n700:#444444; --n900:#1A1A1A;
+    --ink:#1A1A1A; --muted:#666; --sub:#999;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --r-sm:4px; --r-md:6px; --r-lg:8px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{font-family:var(--sans);color:var(--ink);background:var(--n0);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased;}
+  .ui-icon{display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:none;}
+  .ui-teal{color:var(--teal);} .ui-orange{color:var(--orange);}
+  .ui-warn{color:var(--warn);} .ui-green{color:var(--green);} .ui-navy{color:var(--navy);}
+
+  /* Page loader */
+  .page-loader{position:fixed;inset:0;z-index:240;background:#fff;display:flex;align-items:center;justify-content:center;transition:opacity .32s ease,visibility .32s ease;}
+  body.page-loaded .page-loader{opacity:0;visibility:hidden;pointer-events:none;}
+  .loader-atom{width:56px;height:56px;overflow:visible;}
+  .loader-atom .orbit{fill:none;stroke-linecap:round;stroke-width:5;transform-origin:50px 50px;}
+  .loader-atom .orbit-orange{stroke:#E87722;animation:atomSpin 1.15s linear infinite;}
+  .loader-atom .orbit-navy{stroke:#1C4B82;animation:atomSpinReverse 1.45s linear infinite;}
+  .loader-atom .core{fill:#1A1A1A;animation:atomPulse 1.15s ease-in-out infinite;}
+  @keyframes atomSpin{to{transform:rotate(360deg);}}
+  @keyframes atomSpinReverse{to{transform:rotate(-360deg);}}
+  @keyframes atomPulse{0%,100%{transform:scale(1);opacity:.9;}50%{transform:scale(1.18);opacity:1;}}
+
+  /* PA pie fill + appear (pure CSS, no libs) */
+  @property --fpct{syntax:'<number>';initial-value:0;inherits:false;}
+  @keyframes fillDonut{from{--fpct:0}to{--fpct:100}}
+  @keyframes paAppear{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+  .pa-pie.filling{background:radial-gradient(circle at center,var(--n0) 0 54%,transparent 56%),conic-gradient(var(--orange) calc(var(--fpct)*1%),var(--n300) 0);animation:fillDonut .8s cubic-bezier(.25,.8,.25,1) forwards;}
+  .pa.pa-new{animation:paAppear .25s ease-out;}
+
+  .app{display:flex;height:100vh;overflow:hidden;}
+  body.sidebar-collapsed .side{display:none;}
+
+  /* LEFT SIDEBAR */
+  .side{width:clamp(288px,19vw,340px);flex:none;background:var(--n50);border-right:1px solid var(--n300);display:flex;flex-direction:column;}
+  .side-head{padding:14px 16px 8px;background:#ff8033;display:flex;align-items:flex-start;gap:12px;border:0;color:#fff;}
+  .side-head > div{order:2;min-width:0;padding-top:1px;}
+  .side-head .lbl{display:none;}
+  .side-head h1{max-width:170px;font-size:18px;font-weight:700;color:#fff;margin:0;line-height:1.15;}
+  .closebtn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--n300);background:#fff;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.12s;}
+  .closebtn:hover{border-color:var(--orange);color:var(--orange);}
+  .side-head .closebtn{order:1;width:42px;height:42px;margin-top:2px;border:0;border-radius:4px;background:transparent;color:#fff;}
+  .side-head .closebtn:hover{background:rgba(255,255,255,.14);color:#fff;border-color:transparent;}
+  .side-head .closebtn svg{width:26px;height:26px;}
+
+  .progress-box{padding:10px 16px 16px;background:#ff8033;border-bottom:0;display:block;}
+  .progress-box .pm{display:block;margin-top:14px;}
+  .progress-box .pm:first-child{margin-top:0;}
+  .meter{height:5px;border-radius:99px;background:rgba(255,255,255,.34);overflow:hidden;}
+  .meter i{display:block;width:calc(var(--p)*1%);height:100%;border-radius:inherit;background:#fff;}
+  .pm .pt{font-size:12px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#fff;line-height:1;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+  .pm .pt b{font-size:12px;font-weight:700;color:#fff;}
+  .side-finish{width:100%;height:46px;margin-top:18px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:rgba(255,255,255,.18);color:#fff;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.16);}
+  .side-finish:hover{background:rgba(255,255,255,.25);}
+  .side-mobile-back{display:none;}
+
+  .etapas{flex:1;overflow-y:auto;padding:8px 6px;}
+  .etapa{margin-bottom:6px;border:1px solid var(--n300);border-radius:var(--r-md);background:#fff;overflow:hidden;transition:border-color .12s;}
+  .etapa.open{border-color:var(--orange);}
+  .etapa-h{height:64px;display:flex;align-items:center;gap:12px;padding:12px 10px;cursor:pointer;user-select:none;}
+  .etapa-h:hover{background:var(--n50);}
+  .node{width:28px;height:28px;border-radius:var(--r-md);flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--n400);color:var(--n600);background:#fff;}
+  .etapa.done .node{background:var(--green-light);border-color:var(--green);color:var(--green);}
+  .etapa.open .node{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .etapa-h .name{font-size:14px;font-weight:600;color:var(--ink);}
+  .eh-mid{flex:1;min-width:0;}
+  .eh-date{font-size:11px;font-weight:500;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;}
+  .eh-date svg{flex:none;opacity:.7;}
+  .eh-date.none{color:var(--sub);font-style:italic;}
+  .etapa.open .etapa-h .name{color:var(--orange-dark);}
+  .etapa-h .chev{color:var(--sub);transition:transform .2s;}
+  .etapa-h .chev svg{transform-origin:50% 50%; transition:transform .2s;}
+  .etapa.open .etapa-h .chev svg{transform:rotate(180deg);}
+  .etapa-body{border-top:1px solid var(--n200);display:none;}
+  .etapa.open .etapa-body{display:block;animation:fade .16s ease;}
+
+  .conteudo{display:flex;align-items:flex-start;gap:8px;padding:10px 8px;border-bottom:1px solid var(--n100);cursor:pointer;transition:background .1s;}
+  .conteudo:last-child{border-bottom:none;}
+  .conteudo:hover{background:var(--n50);}
+  .conteudo.checked:not(.active){background:rgba(61,138,82,.05);}
+  .conteudo.checked .ctico{color:var(--green);}
+  .ctico{width:18px;flex:none;display:flex;align-items:flex-start;padding-top:2px;color:var(--n400);border-radius:3px;}
+  .conteudo.active{background:var(--orange-subtle);border-left:3px solid var(--orange);padding-left:5px;}
+  .conteudo.locked{background:#f7f7f7;cursor:not-allowed;opacity:.74;}
+  .conteudo.locked:hover{background:#f7f7f7;}
+  .conteudo.locked .ctico, .conteudo.locked svg{opacity:.65;}
+  .conteudo.locked .cc-name{color:#858b94;}
+  .conteudo.locked .cc-type{color:#a0a5ad;}
+
+  .conteudo .cc-mid{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"try try" "name name" "type type" "meta pa";column-gap:10px;row-gap:1px;align-items:center;align-content:start;min-height:72px;}
+  .conteudo .cc-name{grid-area:name;font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;}
+  .conteudo.active .cc-name{font-weight:600;}
+  .conteudo .cc-type{grid-area:type;font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--sub);margin-top:0;display:flex;align-items:center;gap:5px;min-width:0;}
+  .pa{grid-area:pa;display:flex;justify-content:flex-end;align-items:center;gap:7px;margin-top:0;padding-right:2px;align-self:center;white-space:nowrap;}
+  .pa-item{display:inline-flex;align-items:center;gap:4px;color:var(--orange-dark);}
+  .pa .lab{min-width:8px;text-align:center;font-size:12px;font-weight:700;color:var(--orange);line-height:1;}
+  .pa-pie{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at center, var(--n0) 0 56%, transparent 58%), conic-gradient(var(--orange) calc(var(--pct,100)*1%), var(--n300) 0);color:var(--orange-dark);display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;letter-spacing:0;line-height:1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);}
+  .conteudo.active .pa-pie{background:radial-gradient(circle at center, var(--orange-subtle) 0 56%, transparent 58%), conic-gradient(var(--orange) calc(var(--pct,100)*1%), #f3c8a1 0);}
+  .conteudo.locked .pa-pie{background:radial-gradient(circle at center, #f7f7f7 0 56%, transparent 58%), conic-gradient(#a8adb4 calc(var(--pct,100)*1%), #d9dde2 0);color:#7a8089;}
+  .cc-status{grid-area:meta;font-size:11px;font-weight:700;margin-top:0;line-height:1.2;}
+  .cc-status.approved{color:var(--green);}
+  .cc-status.failed{color:#c2410c;}
+  .cc-status.progress{color:var(--teal);}
+  .cc-status.muted{color:var(--sub);}
+  .cc-status.blocked{color:#7a8089;}
+  .cc-try{grid-area:try;font-size:10px;font-weight:400;color:var(--sub);white-space:nowrap;align-self:center;}
+  .cc-meta-row{grid-area:meta;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:0;}
+
+  /* MAIN */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{height:56px;flex:none;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--n300);background:#fff;}
+  .btn-accent{width:38px;height:38px;border-radius:50%;border:none;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.12s;box-shadow:0 2px 6px rgba(232,119,34,.32);padding:0;}
+  .btn-accent:hover{background:var(--orange-dark);}
+  .btn-accent svg{width:18px;height:18px;}
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap;min-width:0;}
+  .crumbs .sep{color:var(--n400);}
+  .crumbs a{color:var(--muted);text-decoration:none;cursor:pointer;}
+  .crumbs a:hover{color:var(--orange);}
+  .crumbs .cur{color:var(--orange);font-weight:600;}
+  .topbar-actions{margin-left:auto;display:flex;align-items:center;gap:16px;}
+  .iconbtn{color:var(--sub);cursor:pointer;display:flex;}
+  .iconbtn:hover{color:var(--muted);}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;cursor:pointer;}
+
+  .scroll{flex:1;overflow-y:auto;}
+  .pagehead{padding:14px 24px 0;}
+  .trail-summary{min-height:146px;background:#fff;border:1px solid #dcdcdc;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.14);display:flex;align-items:center;gap:24px;padding:20px 24px;}
+  .trail-cover{width:196px;height:112px;margin:0;border:1px solid #ececec;border-radius:7px;overflow:hidden;background:linear-gradient(135deg,#f8f1e9,#f1e4d6);flex:none;position:relative;}
+  .trail-cover svg{position:absolute;inset:0;width:100%;height:100%;}
+  .trail-copy{min-width:0;flex:1;}
+  .trail-copy h2{font-size:22px;font-weight:700;margin:0;color:#111;line-height:1.2;}
+  .mobile-trail-hero{display:none;}
+  .tabs{display:flex;border-bottom:1px solid var(--n300);padding:0 32px;margin-top:0;position:sticky;top:0;background:#fff;z-index:10;}
+  .tab{padding:11px 0;margin-right:28px;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:color .12s;white-space:nowrap;}
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--orange);font-weight:600;border-bottom-color:var(--orange);}
+
+  .panel{padding:24px 32px 56px;display:none;}
+  .panel.show{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;}
+  .kpi{background:#fff;border:1px solid var(--n300);border-top:3px solid var(--orange);border-radius:var(--r-md);padding:16px 18px;box-shadow:var(--shadow-sm);}
+  .kpi.teal{border-top-color:var(--teal);}
+  .kpi.navy{border-top-color:var(--navy);}
+  .kpi .klbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--sub);}
+  .kpi .kval{font-size:28px;font-weight:700;color:var(--ink);margin-top:8px;line-height:1;}
+  .kpi.teal .kval{color:var(--teal);font-size:20px;}
+  .kpi.navy .kval{color:var(--navy);}
+  .kpi .ksub{font-size:12px;color:var(--muted);margin-top:6px;}
+
+  .card{background:#fff;border:1px solid var(--n300);border-radius:var(--r-md);box-shadow:var(--shadow-sm);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--n200);gap:12px;flex-wrap:wrap;}
+  .card-head h3{font-size:16px;font-weight:600;margin:0;color:var(--ink);}
+  .card-body{padding:18px;}
+
+  /* Dropdown */
+  .dropdown{position:relative;}
+  .selpill{font-size:12px;font-weight:600;color:var(--muted);background:var(--n100);border:1px solid var(--n300);border-radius:var(--r-sm);padding:5px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:.12s;}
+  .selpill:hover{border-color:var(--n400);}
+  .selpill.on{background:var(--orange-subtle);border-color:#f0c79a;color:var(--orange-dark);}
+  .dropdown-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:178px;background:#fff;border:1px solid var(--n300);border-radius:var(--r-md);box-shadow:var(--shadow-md);padding:5px;z-index:20;display:none;}
+  .dropdown.open .dropdown-menu{display:block;}
+  .dd-opt{font-size:13px;color:var(--n700);padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .dd-opt:hover{background:var(--n100);}
+  .dd-opt.is-sel{background:var(--orange-subtle);color:var(--orange-dark);font-weight:600;}
+  .dd-opt .ck{opacity:0;}
+  .dd-opt.is-sel .ck{opacity:1;}
+  .dd-chev{transition:transform .2s;}
+
+  .chart-hint{font-size:12px;color:var(--sub);margin-top:12px;}
+
+  /* Chart */
+  .chart-wrap{display:flex;gap:10px;}
+  .yaxis{display:flex;flex-direction:column;justify-content:space-between;height:240px;padding-bottom:42px;font-size:11px;color:var(--sub);text-align:right;width:30px;flex:none;}
+  .plot-scroll{flex:1;overflow-x:auto;overflow-y:hidden;}
+  .plot-scroll::-webkit-scrollbar{height:9px;}
+  .plot-scroll::-webkit-scrollbar-thumb{background:var(--n300);border-radius:99px;}
+  .plot-scroll::-webkit-scrollbar-thumb:hover{background:var(--n400);}
+  .plot-scroll::-webkit-scrollbar-track{background:var(--n100);border-radius:99px;}
+  .plot{position:relative;min-width:100%;}
+  .grid-lines{position:absolute;inset:0 0 42px 0;display:flex;flex-direction:column;justify-content:space-between;}
+  .grid-lines i{border-top:1px solid var(--n200);height:0;}
+  .bars{position:relative;display:flex;align-items:flex-end;gap:18px;height:240px;padding-bottom:42px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;min-width:0;}
+  .bar{width:62%;max-width:54px;background:var(--orange);border-radius:4px 4px 0 0;transition:height .55s cubic-bezier(.2,.7,.2,1),background .12s;cursor:pointer;}
+  .bar-col:hover .bar{background:var(--orange-dark);}
+  .bar-col .blabel{position:absolute;bottom:-24px;font-size:11px;color:var(--muted);font-weight:500;text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-col .bval{position:absolute;top:-22px;font-size:12px;font-weight:700;color:var(--orange-dark);opacity:0;transition:opacity .12s;}
+  .bar-col:hover .bval{opacity:1;}
+
+  /* Descrição */
+  .desc{max-width:680px;}
+  .desc p{font-size:14px;line-height:1.6;color:var(--n700);margin:0 0 14px;}
+
+  /* Relatórios */
+  .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .tool{width:40px;height:40px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .12s;box-shadow:0 2px 5px rgba(232,119,34,.28);}
+  .tool:hover{background:var(--orange-dark);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);padding:12px 14px;border-bottom:2px solid var(--n300);}
+  th .sort{color:var(--orange);margin-left:4px;}
+  td{padding:14px;border-bottom:1px solid var(--n200);color:var(--n700);vertical-align:middle;}
+  tr:hover td{background:var(--n50);}
+  td.a-good{color:var(--success);font-weight:600;}
+  td.a-zero{color:var(--n500);}
+  .ct-inline{display:flex;align-items:center;gap:10px;}
+  .ct-inline a{color:var(--orange);text-decoration:none;}
+  .ct-inline a:hover{text-decoration:underline;}
+
+  /* READER */
+  body.reader-open{overflow:hidden;background:#252525;}
+  body.reader-open .app{display:none;}
+  .reader-screen{display:none;height:100vh;background:#252525;flex-direction:column;}
+  body.reader-open .reader-screen{display:flex;}
+  .reader-top{height:50px;flex:none;background:#fff;display:flex;align-items:center;padding:0 0 0 14px;}
+  .reader-back{height:34px;border:0;border-radius:18px;background:#ff8033;color:#fff;font-family:var(--sans);font-size:13px;font-weight:700;padding:0 17px 0 13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 2px 5px rgba(232,119,34,.24);}
+  .reader-back:hover{background:var(--orange-dark);}
+  .reader-back svg{width:17px;height:17px;}
+  .reader-brand{margin-left:auto;margin-right:36px;color:#777;font-size:20px;font-weight:700;line-height:1;}
+  .reader-brand em{font-size:14px;font-weight:400;font-style:italic;margin-left:2px;}
+  .reader-frame{flex:1;width:100%;border:0;background:#252525;}
+  .reader-video-wrap{display:none;flex:1;min-height:0;background:#202020;padding:28px;align-items:center;justify-content:center;}
+  .reader-video{width:min(100%,1180px);max-height:calc(100vh - 106px);background:#000;box-shadow:0 18px 42px rgba(0,0,0,.34);}
+  body.video-reader .reader-frame{display:none;}
+  body.video-reader .reader-video-wrap{display:flex;}
+
+  /* PDF viewer simulation */
+  .pdf-viewer{background:#2f2f2f;color:#ddd;padding:20px 0;height:100%;overflow:auto;}
+  .pdf-page{max-width:820px;margin:0 auto 22px;background:#fff;color:#222;box-shadow:0 10px 30px rgba(0,0,0,.5);padding:42px 48px 50px;font-size:15px;line-height:1.65;border:1px solid #111;}
+  .pdf-page h1{font-size:22px;margin:0 0 16px;color:#111;}
+  .pdf-page h2{font-size:17px;margin:22px 0 10px;color:#222;}
+  .pdf-meta{font-size:12px;color:#666;margin-bottom:18px;}
+  .pdf-body p{margin:0 0 14px;}
+
+  /* Video simulation */
+  .sim-video{position:relative;width:100%;max-width:1100px;background:#111;border-radius:6px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
+  .sim-video video{width:100%;height:100%;display:block;background:#000;}
+  .sim-video .video-ui{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(to bottom,rgba(0,0,0,.2),transparent 30%,transparent 70%,rgba(0,0,0,.45));pointer-events:none;}
+  .sim-video .play-btn{pointer-events:auto;width:72px;height:72px;border-radius:999px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;color:#111;box-shadow:0 4px 18px rgba(0,0,0,.3);}
+  .sim-video .play-btn svg{width:30px;height:30px;margin-left:4px;}
+
+  /* Certificate modal */
+  .certificate-overlay{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;padding-top:37px;}
+  body.certificate-loading .certificate-overlay{display:flex;}
+  .certificate-modal{width:min(346px,calc(100vw - 32px));min-height:120px;background:#fff;border-radius:16px;box-shadow:0 18px 42px rgba(0,0,0,.18);padding:22px 20px 22px;}
+  .certificate-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px;}
+  .certificate-modal h3{margin:0;color:#003b79;font-size:20px;font-weight:700;line-height:1.1;}
+  .certificate-close{width:28px;height:28px;border:0;background:transparent;color:#667085;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+  .certificate-close:hover{color:#1f2937;}
+
+  .sidebar-toggle{position:fixed;left:14px;top:9px;z-index:80;width:38px;height:38px;border:0;border-radius:50%;background:#ff8033;color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(232,119,34,.32);cursor:pointer;}
+  .sidebar-toggle:hover{background:var(--orange-dark);}
+  body.sidebar-collapsed .sidebar-toggle{display:flex;}
+  body.sidebar-collapsed .topbar{padding-left:64px;}
+  body.reader-open .sidebar-toggle{display:none;}
+
+  /* Responsive */
+  @media (max-width:1100px){
+    .side{width:288px;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .trail-summary{gap:14px;}
+    .trail-cover{width:174px;height:98px;}
+    .trail-copy h2{font-size:21px;}
+  }
+  @media (max-width:900px){
+    html,body{height:auto;min-height:100%;}
+    body{overflow:auto;overflow-x:hidden;background:var(--n50);}
+    .app{height:auto;min-height:100vh;overflow:visible;flex-direction:column;}
+    body.sidebar-collapsed .app{display:flex;}
+    .side{position:fixed;left:0;top:0;bottom:0;z-index:90;width:min(86vw,340px);max-width:340px;height:100vh;border-right:1px solid var(--n300);box-shadow:0 18px 42px rgba(0,0,0,.18);}
+    .progress-box{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;padding:10px 16px 16px;}
+    .progress-box .pm{margin-top:0;}
+    .side-finish{grid-column:1 / -1;margin-top:2px;}
+    .side-mobile-back{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 12px 0;height:38px;border:1px solid #f0c79a;border-radius:8px;background:#fff;color:var(--orange-dark);font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;}
+    .side-mobile-back:hover{background:var(--orange-subtle);}
+    .etapas{flex:1;max-height:none;overflow-y:auto;padding:8px 6px 10px;}
+    .main{flex:none;min-height:0;background:#fff;}
+    .topbar{position:sticky;top:0;z-index:30;padding:0 14px;}
+    .topbar .btn-accent,.crumbs{display:none;}
+    .mobile-trail-hero{display:block;margin:14px 14px 0;padding:18px 16px 16px;border-radius:8px;background:#ff8033;color:#fff;box-shadow:0 2px 7px rgba(232,119,34,.22);}
+    .mobile-trail-hero h1{margin:0 0 14px;font-size:21px;font-weight:700;line-height:1.12;color:#fff;}
+    .mobile-continue-btn{width:100%;height:40px;border:1px solid rgba(255,255,255,.5);border-radius:6px;background:#fff;color:var(--orange-dark);font-family:var(--sans);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;}
+    .mobile-continue-btn:hover{background:#fff7ef;}
+    .pagehead{display:none;}
+    .scroll{overflow:visible;}
+    .tabs{top:56px;overflow-x:auto;scrollbar-width:none;}
+    .tabs::-webkit-scrollbar{display:none;}
+    .panel{padding:20px 24px 44px;}
+    table{min-width:720px;}
+  }
+  @media (max-width:760px){
+    .pagehead{padding:14px 14px 0;}
+    .trail-summary{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:12px 14px;min-height:0;padding:14px;}
+    .trail-cover{width:112px;height:66px;}
+    .trail-copy h2{font-size:18px;}
+    .tabs{padding:0 14px;margin-top:14px;}
+    .tab{font-size:12px;margin-right:22px;padding:10px 0;}
+    .panel{padding:18px 14px 40px;}
+    .kpis{grid-template-columns:1fr;gap:12px;}
+    .kpi{padding:14px 15px;}
+    .kpi .kval{font-size:24px;}
+    .kpi.teal .kval{font-size:18px;}
+    .card-head{align-items:flex-start;padding:14px 15px 11px;}
+    .card-body{padding:14px;}
+    .bars{gap:10px;height:220px;}
+    .yaxis{height:220px;}
+    .toolbar{gap:8px;}
+    .tool{width:38px;height:38px;}
+    .reader-top{height:48px;padding-left:10px;}
+  }
+  @media (max-width:520px){
+    .side-head{gap:8px;}
+    .side-head .closebtn{width:36px;height:36px;}
+    .side-head h1{font-size:17px;}
+    .progress-box{grid-template-columns:1fr;gap:12px;padding-bottom:14px;}
+    .etapas{max-height:none;padding:6px;}
+    .etapa-h{height:64px;padding:11px 9px;}
+    .conteudo{padding:10px 8px;}
+    .topbar{height:52px;gap:10px;padding:0 10px;}
+    .btn-accent{width:34px;height:34px;}
+    .crumbs{font-size:12px;}
+    .topbar-actions{gap:10px;}
+    .iconbtn{display:none;}
+    .avatar{width:30px;height:30px;}
+    .trail-summary{grid-template-columns:98px minmax(0,1fr);padding:12px;}
+    .trail-cover{width:98px;height:58px;}
+    .trail-copy h2{font-size:17px;}
+    .tabs{top:52px;}
+  }
+</style>
+</head>
+<body>
+<!-- SVG ICON SPRITE (zero external deps) -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+  <symbol id="icon-close" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+  <symbol id="icon-arrow-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="icon-arrow-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="icon-pointer-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="icon-pdf" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="icon-play-media" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M10 8.5l5 3.5-5 3.5z" fill="currentColor"/></symbol>
+  <symbol id="icon-png" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9" r="2" fill="currentColor"/><path d="M5 18l5-6 3 3.5L17 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="icon-file-xls" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M8 8h2M14 8h2M8 12h2M14 12h2M8 16h2M14 16h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+  <symbol id="icon-file-csv" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M7 8h3M14 8h3M7 12h3M14 12h3M7 16h3M14 16h3" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="icon-questions" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9.5 9.5a2.5 2.5 0 014.2 1.7c0 1.3-1 1.8-1.7 2.2-.5.3-.8.6-.8 1.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="icon-undo" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0113.8-5.6l1.6 1.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M4 7v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M7 15V5a2 2 0 012-2h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="icon-printer" viewBox="0 0 24 24"><rect x="6" y="9" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M6 14H4a1 1 0 01-1-1V8a2 2 0 012-2h14a2 2 0 012 2v5a1 1 0 01-1 1h-2M8 18v3h8v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="icon-menu-burger" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="icon-checkbox-2026" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="icon-checked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="icon-right-open" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M18 14V10a6 6 0 10-12 0v4l-2 2v1h16v-1l-2-2z" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9 18a3 3 0 006 0" stroke="currentColor" stroke-width="1.8" fill="none"/></symbol>
+  <symbol id="icon-certificate" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 14l-1 6 1-1 1 1-1-6z" fill="currentColor"/><rect x="3" y="16" width="18" height="5" rx="1" stroke="currentColor" stroke-width="1.6" fill="none"/></symbol>
+  <symbol id="icon-lock-closed" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</defs>
+</svg>
+
+<div class="page-loader" id="pageLoader" role="status" aria-label="Carregando">
+  <svg class="loader-atom" viewBox="0 0 100 100" aria-hidden="true">
+    <ellipse class="orbit orbit-orange" cx="50" cy="50" rx="34" ry="12" transform="rotate(26 50 50)"/>
+    <ellipse class="orbit orbit-navy" cx="50" cy="50" rx="34" ry="12" transform="rotate(-55 50 50)"/>
+    <circle class="core" cx="50" cy="50" r="5"/>
+  </svg>
+</div>
+
+<div class="app">
+  <!-- LEFT PANEL -->
+  <aside class="side">
+    <div class="side-head">
+      <div>
+        <div class="lbl">Trilha</div>
+        <h1>Trilha Completa Automação</h1>
+      </div>
+      <button class="closebtn" title="Sair da trilha" aria-label="Sair">
+        <svg class="ui-icon" width="24" height="24"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+
+    <div class="progress-box">
+      <div class="pm">
+        <div class="pt"><span>Progresso</span><b>100%</b></div>
+        <div class="meter" style="--p:100;"><i></i></div>
+      </div>
+      <div class="pm">
+        <div class="pt"><span>Aproveitamento</span><b>100%</b></div>
+        <div class="meter" style="--p:100;"><i></i></div>
+      </div>
+      <button class="side-finish" type="button">
+        <span>Finalizar trilha</span>
+      </button>
+    </div>
+
+    <button class="side-mobile-back" type="button" aria-label="Voltar">
+      <svg width="16" height="16"><use href="#icon-arrow-left"></use></svg>
+      <span>Voltar</span>
+    </button>
+
+    <div class="etapas">
+      <!-- Etapa 1 -->
+      <div class="etapa done">
+        <div class="etapa-h">
+          <div class="node">1</div>
+          <div class="eh-mid">
+            <div class="name">Etapa 1</div>
+            <div class="eh-date">
+              <svg width="13" height="13"><use href="#icon-clock"></use></svg>
+              Acesso · 14/06/2026 11:45
+            </div>
+          </div>
+          <span class="chev"><svg width="14" height="14"><use href="#icon-pointer-down"></use></svg></span>
+        </div>
+        <div class="etapa-body">
+          <div class="conteudo" data-type="pdf" data-src="uploads/manual-minha-area.pdf" role="button" tabindex="0">
+            <div class="ctico" style="background:var(--teal-light)">
+              <svg width="16" height="16" class="ui-teal"><use href="#icon-pdf"></use></svg>
+            </div>
+            <div class="cc-mid">
+              <div class="cc-try">Tentativa 1/2</div>
+              <div class="pa">
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Aproveitamento: 100%">A</span><span class="pa-pie">100%</span></span>
+              </div>
+              <div class="cc-name" title="Conteúdo 1 — Manual Minha área.pdf">Conteúdo 1 — Manual Minha área.pdf</div>
+              <div class="cc-type">Documento</div>
+              <div class="cc-meta-row"><div class="cc-status approved">Aprovado</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 2 (open) -->
+      <div class="etapa open">
+        <div class="etapa-h">
+          <div class="node">2</div>
+          <div class="eh-mid"><div class="name">Etapa 2</div></div>
+          <span class="chev"><svg width="14" height="14"><use href="#icon-pointer-down"></use></svg></span>
+        </div>
+        <div class="etapa-body">
+          <div class="conteudo active" data-type="video" data-src="uploads/linguagens-programacao.mp4" role="button" tabindex="0">
+            <div class="ctico" style="background:var(--orange-subtle)">
+              <svg width="16" height="16" class="ui-orange"><use href="#icon-play-media"></use></svg>
+            </div>
+            <div class="cc-mid">
+              <div class="cc-try">Tentativa 2/3</div>
+              <div class="pa">
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Aproveitamento: 100%">A</span><span class="pa-pie">100%</span></span>
+              </div>
+              <div class="cc-name" title="Conteúdo 2 — Linguagens de Programação">Conteúdo 2 — Linguagens de Programação</div>
+              <div class="cc-type">Vídeo</div>
+              <div class="cc-meta-row"><div class="cc-status progress">Em andamento</div></div>
+            </div>
+          </div>
+          <div class="conteudo" data-type="image">
+            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" class="ui-teal"><use href="#icon-png"></use></svg></div>
+            <div class="cc-mid">
+              <div class="cc-name">qrcode lista de presença — Presencial.png</div>
+              <div class="cc-type">Documento</div>
+              <div class="cc-status muted">Não visualizado</div>
+            </div>
+          </div>
+          <div class="conteudo" data-type="pdf">
+            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" class="ui-teal"><use href="#icon-pdf"></use></svg></div>
+            <div class="cc-mid"><div class="cc-name">Manual Lector 2026/02 — Social.pdf</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div>
+          </div>
+          <div class="conteudo" data-type="pdf">
+            <div class="ctico" style="background:var(--teal-light)"><svg width="16" height="16" class="ui-teal"><use href="#icon-pdf"></use></svg></div>
+            <div class="cc-mid"><div class="cc-name">Menu validação de termos — Trilhas.pdf</div><div class="cc-type">Documento</div><div class="cc-status muted">Não visualizado</div></div>
+          </div>
+          <div class="conteudo" data-type="xls">
+            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" class="ui-warn"><use href="#icon-file-xls"></use></svg></div>
+            <div class="cc-mid">
+              <div class="cc-try">Tentativa 1/2</div>
+              <div class="pa">
+                <span class="pa-item" style="--pct:100"><span class="lab" title="Progresso: 100%">P</span><span class="pa-pie">100%</span></span>
+                <span class="pa-item" style="--pct:20"><span class="lab" title="Aproveitamento: 20%">A</span><span class="pa-pie">20%</span></span>
+              </div>
+              <div class="cc-name">Avaliação_Excel (5).xlsx</div>
+              <div class="cc-type">Avaliação</div>
+              <div class="cc-meta-row"><div class="cc-status failed">Reprovado</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 3 -->
+      <div class="etapa">
+        <div class="etapa-h">
+          <div class="node">3</div>
+          <div class="eh-mid">
+            <div class="name">Etapa 3</div>
+            <div class="eh-date"><svg width="13" height="13"><use href="#icon-clock"></use></svg> Acesso · 18/06/2026 09:20</div>
+          </div>
+          <span class="chev"><svg width="14" height="14"><use href="#icon-pointer-down"></use></svg></span>
+        </div>
+        <div class="etapa-body">
+          <div class="conteudo locked" aria-disabled="true">
+            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" class="ui-warn"><use href="#icon-questions"></use></svg></div>
+            <div class="cc-mid"><div class="cc-name">todas na mesma página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
+          </div>
+          <div class="conteudo locked" aria-disabled="true">
+            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" class="ui-warn"><use href="#icon-questions"></use></svg></div>
+            <div class="cc-mid"><div class="cc-name">uma por página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
+          </div>
+          <div class="conteudo locked" aria-disabled="true">
+            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" class="ui-warn"><use href="#icon-questions"></use></svg></div>
+            <div class="cc-mid"><div class="cc-name">Reação uma por página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
+          </div>
+          <div class="conteudo locked" aria-disabled="true">
+            <div class="ctico" style="background:var(--warn-light)"><svg width="16" height="16" class="ui-warn"><use href="#icon-questions"></use></svg></div>
+            <div class="cc-mid"><div class="cc-name">Reação todas em uma página Thiago</div><div class="cc-type">Avaliação</div><div class="cc-status blocked">Conteúdo bloqueado</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 4 -->
+      <div class="etapa">
+        <div class="etapa-h">
+          <div class="node">4</div>
+          <div class="eh-mid"><div class="name">Etapa 4</div></div>
+          <span class="chev"><svg width="14" height="14"><use href="#icon-pointer-down"></use></svg></span>
+        </div>
+        <div class="etapa-body">
+          <div class="conteudo" data-type="xls"><div class="ctico"></div><div class="cc-mid"><div class="cc-name">Checklist - HML - Mika (4).xlsx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div></div>
+          <div class="conteudo" data-type="pdf"><div class="ctico"></div><div class="cc-mid"><div class="cc-name">Apresentação faculdade socialização 14.07 2 (7).pptx</div><div class="cc-type">Documento</div><div class="cc-status muted">Não iniciado</div></div></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="btn-accent" id="backBtn" title="Voltar" aria-label="Voltar">
+        <svg width="18" height="18"><use href="#icon-undo"></use></svg>
+      </button>
+      <nav class="crumbs">
+        <a>Vitrine</a><span class="sep">›</span>
+        <a>Teste Automação</a><span class="sep">›</span>
+        <a>Minha Área</a><span class="sep">›</span>
+        <a>Minhas Trilhas</a><span class="sep">›</span>
+        <span class="cur">Conteúdo 2</span>
+      </nav>
+    </div>
+
+    <div class="scroll">
+      <section class="mobile-trail-hero" aria-label="Trilha atual">
+        <h1>Trilha Completa Automação</h1>
+        <button class="mobile-continue-btn" type="button" data-open-video="uploads/linguagens-programacao.mp4">
+          <span>Continuar de onde parou</span>
+          <svg width="15" height="15" style="margin-left:2px"><use href="#icon-arrow-right"></use></svg>
+        </button>
+      </section>
+
+      <div class="pagehead">
+        <section class="trail-summary" aria-label="Resumo da trilha">
+          <figure class="trail-cover" aria-hidden="true">
+            <!-- inline cover illustration -->
+            <svg viewBox="0 0 196 112" width="196" height="112" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#f3d7c2"/><stop offset="100%" stop-color="#e3b88f"/>
+                </linearGradient>
+              </defs>
+              <rect width="196" height="112" fill="url(#cg)"/>
+              <circle cx="48" cy="48" r="26" fill="none" stroke="#E87722" stroke-width="9" opacity=".9"/>
+              <circle cx="48" cy="48" r="16" fill="none" stroke="#1C4B82" stroke-width="7" opacity=".85"/>
+              <rect x="108" y="28" width="62" height="56" rx="4" fill="#fff" opacity=".9"/>
+              <rect x="118" y="40" width="42" height="6" rx="2" fill="#E87722"/>
+              <rect x="118" y="52" width="32" height="6" rx="2" fill="#1C4B82" opacity=".6"/>
+              <rect x="118" y="64" width="42" height="6" rx="2" fill="#E87722" opacity=".7"/>
+            </svg>
+          </figure>
+          <div class="trail-copy">
+            <h2>Trilha Completa Automação</h2>
+          </div>
+        </section>
+      </div>
+
+      <div class="tabs">
+        <div class="tab" data-tab="descricao">Descrição</div>
+        <div class="tab active" data-tab="desempenho">Desempenho</div>
+        <div class="tab" data-tab="relatorios">Relatórios</div>
+      </div>
+
+      <!-- DESEMPENHO -->
+      <section class="panel show" data-panel="desempenho">
+        <div class="kpis">
+          <div class="kpi"><div class="klbl">Aproveitamento requerido</div><div class="kval">20%</div></div>
+          <div class="kpi"><div class="klbl">Aproveitamento parcial</div><div class="kval">12.5%</div></div>
+          <div class="kpi teal"><div class="klbl">Status atual</div><div class="kval">EM ANDAMENTO</div></div>
+          <div class="kpi navy"><div class="klbl">Carga horária</div><div class="kval">01H30M</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Aproveitamento por conteúdo</h3>
+            <div class="dropdown" id="etapaFilter">
+              <button class="selpill on" id="filterTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="filterLabel">Todas as etapas</span>
+                <svg width="13" height="13" class="dd-chev"><use href="#icon-pointer-down"></use></svg>
+              </button>
+              <div class="dropdown-menu" id="filterMenu" role="listbox">
+                <div class="dd-opt is-sel" data-key="all" role="option">Todas as etapas <span class="ck">✓</span></div>
+                <div class="dd-opt" data-key="e1" role="option">Etapa 1 <span class="ck">✓</span></div>
+                <div class="dd-opt" data-key="e2" role="option">Etapa 2 <span class="ck">✓</span></div>
+                <div class="dd-opt" data-key="e3" role="option">Etapa 3 <span class="ck">✓</span></div>
+                <div class="dd-opt" data-key="e4" role="option">Etapa 4 <span class="ck">✓</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <div class="yaxis"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
+              <div class="plot-scroll">
+                <div class="plot" id="plot">
+                  <div class="grid-lines"><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="bars" id="bars"></div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-hint" id="chartHint"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DESCRIÇÃO -->
+      <section class="panel" data-panel="descricao">
+        <div class="desc">
+          <p>Descrição preenchida via Cypress.</p>
+          <p>Este conteúdo faz parte da <strong>Etapa 2 — Ferramentas</strong> da Trilha Completa Automação. Conclua o vídeo e os documentos de apoio para liberar a avaliação e avançar para a próxima etapa.</p>
+        </div>
+      </section>
+
+      <!-- RELATÓRIOS -->
+      <section class="panel" data-panel="relatorios">
+        <div class="toolbar">
+          <div class="tool" title="Filtros"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
+          <div class="tool" title="Copiar"><svg width="18" height="18"><use href="#icon-copy"></use></svg></div>
+          <div class="tool" title="Exportar Excel"><svg width="18" height="18"><use href="#icon-file-xls"></use></svg></div>
+          <div class="tool" title="Exportar CSV"><svg width="18" height="18"><use href="#icon-file-csv"></use></svg></div>
+          <div class="tool" title="Exportar PDF"><svg width="18" height="18"><use href="#icon-pdf"></use></svg></div>
+          <div class="tool" title="Imprimir"><svg width="18" height="18"><use href="#icon-printer"></use></svg></div>
+        </div>
+        <div class="card" style="overflow:hidden;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:55%">Conteúdo <span class="sort">▾</span></th>
+                <th>Aproveitamento</th>
+                <th>Carga horária</th>
+                <th>Data de conclusão</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><div class="ct-inline"><span>Conteúdo 1 — <a>Manual Lector 2026/01 — Minha área.pdf</a></span></div></td><td class="a-good">100,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><span>Conteúdo 2 — <a>Linguagens-de-Programacao</a></span></div></td><td class="a-good">100,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><span>Conteúdo 3 — <a>qrcode lista de presença — Presencial.png</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><span>Conteúdo 4 — <a>Manual Lector 2026/02 — Social.pdf</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><span>Conteúdo 5 — <a>Treinamento Trilha Automação 1</a></span></div></td><td class="a-zero">0,00%</td><td>01:30:00</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><span>Conteúdo 6 — <a>todas na mesma página Thiago</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+              <tr><td><div class="ct-inline"><span>Conteúdo 7 — <a>uma por página Thiago</a></span></div></td><td class="a-zero">0,00%</td><td>—</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- READER SCREEN -->
+<section class="reader-screen" aria-label="Leitor">
+  <div class="reader-top">
+    <button class="reader-back" type="button" id="readerBack" aria-label="Voltar para a trilha">
+      <svg width="17" height="17"><use href="#icon-arrow-left"></use></svg>
+      <span>Voltar para a trilha</span>
+    </button>
+    <div class="reader-brand" aria-hidden="true">Lector<em>live</em></div>
+  </div>
+
+  <!-- PDF / Document viewer (simulated pure HTML) -->
+  <div class="pdf-viewer" id="pdfViewer" style="display:none;">
+    <div class="pdf-page">
+      <div class="pdf-meta">Documento · Manual Lector — Visualização interna (demo)</div>
+      <h1>Manual Minha Área</h1>
+      <p><strong>Este é um visualizador simulado em HTML puro.</strong> O comportamento de abrir/fechar, navegação e estado da trilha está 100% replicado sem dependências externas.</p>
+      <p>O sistema de trilha registra automaticamente o estado de visualização quando o usuário interage com os itens.</p>
+      <h2>Seções importantes</h2>
+      <ul style="padding-left:20px;margin:0 0 14px">
+        <li>Acesso e permissões</li>
+        <li>Configuração de perfis</li>
+        <li>Relatórios e exportação</li>
+      </ul>
+      <p>Role para emular um documento longo. Feche o leitor com o botão superior para voltar à trilha.</p>
+    </div>
+    <div class="pdf-page">
+      <h2>Termos e condições</h2>
+      <p>O conteúdo deste documento é confidencial. A reprodução não autorizada é proibida.</p>
+      <p>Para demonstração, este visualizador é gerado 100% com HTML + CSS sem bibliotecas.</p>
+    </div>
+  </div>
+
+  <!-- VIDEO (pure custom player - no external deps, always works) -->
+  <div class="reader-video-wrap" id="videoWrap">
+    <div class="sim-video" id="videoContainer" style="position:relative;width:min(100%,1100px);max-height:calc(100vh - 120px);background:#000;border-radius:6px;overflow:hidden;aspect-ratio:16/9;display:flex;flex-direction:column;">
+      <!-- Real video (only if real src provided) -->
+      <video id="videoFrame" style="width:100%;height:100%;display:none;background:#000;" controls playsinline></video>
+
+      <!-- Pure custom player UI (always present for demo portability) -->
+      <div id="customPlayer" style="position:absolute;inset:0;display:flex;flex-direction:column;color:#fff;font-family:var(--sans);">
+        <!-- Big center play -->
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+          <button id="customPlay" aria-label="Play" style="width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.92);border:0;display:flex;align-items:center;justify-content:center;color:#111;box-shadow:0 6px 20px rgba(0,0,0,.35);cursor:pointer;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+        </div>
+
+        <!-- Bottom controls -->
+        <div style="background:linear-gradient(transparent,rgba(0,0,0,.75));padding:10px 14px 8px;">
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+            <!-- Progress -->
+            <div id="customProgress" style="flex:1;height:4px;background:rgba(255,255,255,.25);border-radius:99px;position:relative;cursor:pointer;">
+              <div id="customBar" style="height:100%;width:0%;background:#E87722;border-radius:inherit;transition:width .08s linear;"></div>
+            </div>
+            <div style="min-width:72px;text-align:right;opacity:.85;">
+              <span id="customTime">00:00</span> / <span id="customDur">03:42</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;margin-top:6px;gap:10px;font-size:12px;opacity:.9;">
+            <button id="customPlaySmall" style="background:none;border:0;color:#fff;padding:0;cursor:pointer;display:flex;">▶</button>
+            <div style="flex:1"></div>
+            <span style="opacity:.6">DEMO PLAYER — 100% vanilla</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CERTIFICATE LOADING MODAL -->
+<div class="certificate-overlay" role="dialog" aria-modal="true" aria-labelledby="certificateTitle">
+  <div class="certificate-modal">
+    <div class="certificate-modal-head">
+      <h3 id="certificateTitle">Certificado</h3>
+      <button class="certificate-close" type="button" id="certificateClose" aria-label="Fechar">
+        <svg width="22" height="22"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <p>Aguarde enquanto seu certificado está sendo gerado.</p>
+  </div>
+</div>
+
+<button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Mostrar menu da trilha">
+  <svg width="22" height="22"><use href="#icon-menu-burger"></use></svg>
+</button>
+
+<script>
+// ============ ZERO DEPENDENCY VANILLA IMPLEMENTATION ============
+
+// Loader
+window.addEventListener('load', () => {
+  setTimeout(() => document.body.classList.add('page-loaded'), 580);
+});
+
+// Icon helper (if any dynamic icons needed)
+function makeIcon(name, cls = '') {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'ui-icon ' + cls);
+  svg.setAttribute('width', '18');
+  svg.setAttribute('height', '18');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '#icon-' + name);
+  svg.appendChild(use);
+  return svg;
+}
+
+// Tabs + Panels
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+let currentTab = 'desempenho';
+
+function activate(name) {
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  panels.forEach(p => p.classList.toggle('show', p.dataset.panel === name));
+  try { localStorage.setItem('trilha-vanilla-tab', name); } catch(e){}
+  if (name === 'desempenho') renderChart(currentKey);
+}
+tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
+
+// Sidebar collapse
+const sidebarClose = document.querySelector('.side-head .closebtn');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const mobileSidebarQuery = window.matchMedia('(max-width: 900px)');
+
+function syncSidebarMode() {
+  if (mobileSidebarQuery.matches) document.body.classList.add('sidebar-collapsed');
+  else document.body.classList.remove('sidebar-collapsed');
+}
+syncSidebarMode();
+if (mobileSidebarQuery.addEventListener) {
+  mobileSidebarQuery.addEventListener('change', syncSidebarMode);
+} else if (mobileSidebarQuery.addListener) {
+  mobileSidebarQuery.addListener(syncSidebarMode);
+}
+if (sidebarClose) sidebarClose.addEventListener('click', () => document.body.classList.add('sidebar-collapsed'));
+if (sidebarToggle) sidebarToggle.addEventListener('click', () => document.body.classList.remove('sidebar-collapsed'));
+
+// Mobile back button
+const mobileBack = document.querySelector('.side-mobile-back');
+if (mobileBack) mobileBack.addEventListener('click', () => document.body.classList.add('sidebar-collapsed'));
+
+// ============ READER (PDF sim + Video) ============
+const readerScreen = document.querySelector('.reader-screen');
+const pdfViewer = document.getElementById('pdfViewer');
+const videoWrap = document.getElementById('videoWrap');
+const videoFrame = document.getElementById('videoFrame');
+const readerBack = document.getElementById('readerBack');
+
+// Custom pure player state (zero dep video simulation)
+let customPlayer = null;
+let customInterval = null;
+
+function resetReader() {
+  pdfViewer.style.display = 'none';
+  videoWrap.style.display = 'none';
+
+  // stop real video
+  if (videoFrame) {
+    videoFrame.pause();
+    videoFrame.removeAttribute('src');
+    videoFrame.style.display = 'none';
+    videoFrame.load();
+  }
+
+  // stop custom player
+  if (customInterval) { clearInterval(customInterval); customInterval = null; }
+  const cp = document.getElementById('customPlayer');
+  if (cp) cp.style.display = 'flex';
+
+  document.body.classList.remove('pdf-reader', 'video-reader', 'certificate-reader');
+}
+
+function openPdfViewer() {
+  resetReader();
+  pdfViewer.style.display = 'block';
+  document.body.classList.add('reader-open', 'pdf-reader');
+}
+
+function startCustomPlayer() {
+  const playBtn = document.getElementById('customPlay');
+  const playSmall = document.getElementById('customPlaySmall');
+  const bar = document.getElementById('customBar');
+  const progress = document.getElementById('customProgress');
+  const timeEl = document.getElementById('customTime');
+  const durEl = document.getElementById('customDur');
+
+  if (!playBtn || !bar) return;
+  if (playBtn.dataset.bound === '1') return; // avoid duplicate bindings
+  playBtn.dataset.bound = '1';
+
+  let playing = false;
+  let pct = 12; // start a bit in, like "em andamento"
+
+  function fmt(s) {
+    const m = Math.floor(s / 60);
+    const ss = Math.floor(s % 60);
+    return m + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+
+  const TOTAL = 222; // ~3:42 fake
+
+  function render() {
+    bar.style.width = pct + '%';
+    const currentSec = Math.round((pct / 100) * TOTAL);
+    timeEl.textContent = fmt(currentSec);
+    durEl.textContent = fmt(TOTAL);
+  }
+
+  function tick() {
+    if (!playing) return;
+    pct = Math.min(100, pct + 0.45);
+    render();
+    if (pct >= 100) {
+      playing = false;
+      playBtn.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+      if (playSmall) playSmall.textContent = '▶';
+      clearInterval(customInterval);
+      customInterval = null;
+    }
+  }
+
+  function toggle() {
+    playing = !playing;
+    if (playing) {
+      playBtn.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>';
+      if (playSmall) playSmall.textContent = '⏸';
+      if (!customInterval) customInterval = setInterval(tick, 140);
+    } else {
+      playBtn.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+      if (playSmall) playSmall.textContent = '▶';
+      clearInterval(customInterval);
+      customInterval = null;
+    }
+  }
+
+  function seek(e) {
+    const rect = progress.getBoundingClientRect();
+    pct = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    render();
+  }
+
+  playBtn.onclick = toggle;
+  if (playSmall) playSmall.onclick = toggle;
+  progress.onclick = seek;
+
+  // init
+  render();
+  customPlayer = { toggle, seek, render };
+}
+
+function openVideo(src) {
+  resetReader();
+  videoWrap.style.display = 'flex';
+  document.body.classList.add('reader-open', 'video-reader');
+
+  const realVideo = videoFrame;
+  const custom = document.getElementById('customPlayer');
+
+  // If we have a real src and it can load, use native video
+  if (src) {
+    realVideo.style.display = 'block';
+    if (custom) custom.style.display = 'none';
+
+    realVideo.src = src;
+    realVideo.play().catch(() => {});
+    // If it fails later, the custom is still hidden but user sees native controls
+    return;
+  }
+
+  // Pure vanilla simulated player (no file needed, always works)
+  if (custom) custom.style.display = 'flex';
+  realVideo.style.display = 'none';
+  startCustomPlayer();
+}
+
+function closeReader() {
+  document.body.classList.remove('reader-open');
+  resetReader();
+}
+
+if (readerBack) readerBack.addEventListener('click', closeReader);
+
+// Bind content items
+function bindContentItems() {
+  document.querySelectorAll('.conteudo:not(.locked)').forEach(el => {
+    const open = () => {
+      const type = el.dataset.type || 'pdf';
+      const src = el.dataset.src;
+
+      // Mark as viewed when opened
+      if (!el.classList.contains('checked')) {
+        el.classList.add('checked');
+        updateContentStatus(el);
+      }
+
+      if (type === 'video') {
+        openVideo(src);
+      } else {
+        // pdf, image, xls → document viewer
+        openPdfViewer();
+      }
+    };
+
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open();
+      }
+    });
+  });
+
+  // Mobile continue button
+  document.querySelectorAll('.mobile-continue-btn').forEach(btn => {
+    btn.addEventListener('click', () => openVideo(btn.dataset.openVideo));
+  });
+}
+
+function updateContentStatus(el) {
+  const status = el.querySelector('.cc-status');
+  const ccMid = el.querySelector('.cc-mid');
+  const hasPa = !!el.querySelector('.pa');
+
+  if (status && status.classList.contains('muted') && !hasPa) {
+    status.textContent = 'Visualizado';
+    status.classList.replace('muted', 'approved');
+
+    const pa = document.createElement('div');
+    pa.className = 'pa pa-new';
+    pa.dataset.dynamic = '1';
+    pa.innerHTML = `
+      <span class="pa-item" style="--pct:100">
+        <span class="lab" title="Progresso: 100%">P</span>
+        <span class="pa-pie filling">100%</span>
+      </span>
+      <span class="pa-item" style="--pct:100">
+        <span class="lab" title="Aproveitamento: 100%">A</span>
+        <span class="pa-pie filling">100%</span>
+      </span>`;
+    ccMid.insertBefore(pa, ccMid.firstChild);
+  }
+}
+
+// Check toggle on list items (clicking anywhere also toggles check)
+function bindCheckToggles() {
+  document.querySelectorAll('.conteudo:not(.locked)').forEach(el => {
+    // already bound open above — this adds the check visual toggle
+    el.addEventListener('click', (ev) => {
+      // Only toggle check state when not opening reader (i.e. clicking already-checked)
+      // We always mark opened items as checked above. For extra toggle on non-active items:
+      const wasChecked = el.classList.contains('checked');
+      // The open handler already added the class. Allow manual uncheck:
+      if (ev.target.closest('.pa') || ev.target.closest('.cc-name')) {
+        // allow click through
+      }
+    }, {capture: true});
+
+    // secondary: allow clicking the left area to just toggle without opening reader
+    const ctico = el.querySelector('.ctico');
+    if (ctico) {
+      ctico.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const was = el.classList.contains('checked');
+        el.classList.toggle('checked');
+        const is = el.classList.contains('checked');
+        const status = el.querySelector('.cc-status');
+        const ccMid = el.querySelector('.cc-mid');
+        const hasPa = !!el.querySelector('.pa');
+
+        if (is && !was && status && status.classList.contains('muted') && !hasPa) {
+          status.textContent = 'Visualizado';
+          status.classList.replace('muted', 'approved');
+          const pa = document.createElement('div');
+          pa.className = 'pa pa-new'; pa.dataset.dynamic = '1';
+          pa.innerHTML = `<span class="pa-item" style="--pct:100"><span class="lab">P</span><span class="pa-pie filling">100%</span></span><span class="pa-item" style="--pct:100"><span class="lab">A</span><span class="pa-pie filling">100%</span></span>`;
+          ccMid.insertBefore(pa, ccMid.firstChild);
+        } else if (!is && was && status && status.textContent === 'Visualizado') {
+          status.textContent = 'Não iniciado';
+          status.classList.replace('approved', 'muted');
+          const d = el.querySelector('.pa[data-dynamic]');
+          if (d) d.remove();
+        }
+      });
+    }
+  });
+}
+
+// ============ ACCORDION (etapas) ============
+function bindAccordions() {
+  document.querySelectorAll('.etapa .etapa-h').forEach(h => {
+    h.addEventListener('click', () => {
+      const etapa = h.closest('.etapa');
+      etapa.classList.toggle('open');
+    });
+  });
+}
+
+// ============ CHART ============
+const ETAPAS = {
+  e1: { name: 'Etapa 1', vals: [100,100,90,100,80,100] },
+  e2: { name: 'Etapa 2', vals: [100,100,0,0,25] },
+  e3: { name: 'Etapa 3', vals: [0,0,0,0,0] },
+  e4: { name: 'Etapa 4', vals: [0,0,0,0,0,0,0,0] },
+};
+const SCROLL_AFTER = 10;
+const COL_WIDTH = 84;
+let currentKey = 'all';
+
+function getItems(key) {
+  const out = [];
+  const keys = key === 'all' ? ['e1','e2','e3','e4'] : [key];
+  keys.forEach(k => {
+    ETAPAS[k].vals.forEach((v, i) => {
+      out.push({
+        label: (key === 'all' ? ETAPAS[k].name.replace('Etapa','E') + ' · ' : '') + 'Conteúdo ' + (i + 1),
+        v
+      });
+    });
+  });
+  return out;
+}
+
+function renderChart(key) {
+  currentKey = key;
+  const items = getItems(key);
+  const bars = document.getElementById('bars');
+  const plot = document.getElementById('plot');
+
+  bars.innerHTML = items.map(it => {
+    const h = it.v === 0 ? '1.5%' : it.v + '%';
+    return `<div class="bar-col">
+      <span class="bval">${it.v}%</span>
+      <div class="bar" data-target="${h}" style="height:0%"></div>
+      <span class="blabel">${it.label}</span>
+    </div>`;
+  }).join('');
+
+  plot.style.width = (items.length > SCROLL_AFTER) ? (items.length * COL_WIDTH + 'px') : '';
+
+  const hint = document.getElementById('chartHint');
+  const label = key === 'all' ? 'todas as etapas' : ETAPAS[key].name;
+  hint.textContent = `Mostrando ${items.length} conteúdo${items.length>1?'s':''} · ${label}` +
+    (items.length > SCROLL_AFTER ? ' — role para o lado →' : '');
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      bars.querySelectorAll('.bar').forEach(b => {
+        b.style.height = b.dataset.target;
+      });
+    });
+  });
+}
+
+// ============ FILTER DROPDOWN ============
+function bindDropdown() {
+  const dd = document.getElementById('etapaFilter');
+  const trig = document.getElementById('filterTrigger');
+  const menu = document.getElementById('filterMenu');
+
+  trig.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = dd.classList.toggle('open');
+    trig.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  menu.querySelectorAll('.dd-opt').forEach(o => {
+    o.addEventListener('click', () => {
+      menu.querySelectorAll('.dd-opt').forEach(x => x.classList.remove('is-sel'));
+      o.classList.add('is-sel');
+      document.getElementById('filterLabel').textContent = o.firstChild.textContent.trim();
+      dd.classList.remove('open');
+      trig.setAttribute('aria-expanded', 'false');
+      renderChart(o.dataset.key);
+    });
+  });
+
+  document.addEventListener('click', () => dd.classList.remove('open'));
+}
+
+// ============ CERTIFICATE FLOW ============
+let certTimer = null;
+const sideFinish = document.querySelector('.side-finish');
+const certClose = document.getElementById('certificateClose');
+const certOverlay = document.querySelector('.certificate-overlay');
+
+function openCertificateFlow() {
+  if (certTimer) clearTimeout(certTimer);
+  document.body.classList.add('certificate-loading');
+
+  certTimer = setTimeout(() => {
+    document.body.classList.remove('certificate-loading');
+    closeReader(); // ensure clean state
+    // Open the simulated PDF viewer (could be replaced by real cert page)
+    const pdfV = document.getElementById('pdfViewer');
+    pdfV.innerHTML = `
+      <div class="pdf-page" style="max-width:780px">
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="font-size:13px;letter-spacing:2px;color:#555">CERTIFICADO DE CONCLUSÃO</div>
+        </div>
+        <h1 style="text-align:center">Trilha Completa Automação</h1>
+        <p style="text-align:center;font-size:15.5px">O aluno concluiu com <strong>100% de aproveitamento</strong> em 02/06/2026.</p>
+        <div style="margin:28px 0 12px;height:1px;background:#ddd"></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <div><strong>Caio gomes</strong><br><span style="color:#666">Aluno</span></div>
+          <div style="text-align:right"><strong>CARLOS EDUARDO DONINI</strong><br><span style="color:#666">TREINAMENTOS</span></div>
+        </div>
+      </div>
+    `;
+    document.body.classList.add('reader-open', 'pdf-reader', 'certificate-reader');
+    pdfV.style.display = 'block';
+  }, 1350);
+}
+
+function closeCertificateModal() {
+  clearTimeout(certTimer);
+  document.body.classList.remove('certificate-loading');
+}
+
+if (sideFinish) sideFinish.addEventListener('click', openCertificateFlow);
+if (certClose) certClose.addEventListener('click', () => {
+  closeCertificateModal();
+  closeReader();
+});
+
+// Also allow clicking overlay backdrop to close
+if (certOverlay) {
+  certOverlay.addEventListener('click', (e) => {
+    if (e.target === certOverlay) closeCertificateModal();
+  });
+}
+
+// ============ BACK BUTTON (top left) ============
+const backBtn = document.getElementById('backBtn');
+if (backBtn) backBtn.addEventListener('click', () => {
+  // Simple demo action: collapse sidebar on desktop, or go "back" to list
+  if (window.innerWidth < 900) {
+    document.body.classList.add('sidebar-collapsed');
+  } else {
+    alert('Ação de voltar — em um sistema real retornaria para a lista de trilhas.');
+  }
+});
+
+// ============ INIT ============
+function init() {
+  // Replace any remaining raw icon text classes (safety)
+  document.querySelectorAll('.ctico').forEach(el => {
+    if (!el.querySelector('svg')) {
+      el.innerHTML = '';
+      const s = document.createElement('span');
+      s.innerHTML = '<svg width="16" height="16"><use href="#icon-checkbox-2026"></use></svg>';
+      el.appendChild(s.firstElementChild);
+    }
+  });
+
+  bindContentItems();
+  bindCheckToggles();
+  bindAccordions();
+  bindDropdown();
+
+  // Initial chart
+  renderChart('all');
+
+  // Restore last tab
+  let saved = 'desempenho';
+  try { saved = localStorage.getItem('trilha-vanilla-tab') || 'desempenho'; } catch(e){}
+  activate(saved);
+
+  // Keyboard: ESC closes reader
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (document.body.classList.contains('reader-open')) closeReader();
+      else if (document.body.classList.contains('certificate-loading')) closeCertificateModal();
+    }
+  });
+
+  // Demo: clicking the cover opens the current video (nice touch)
+  const cover = document.querySelector('.trail-cover');
+  if (cover) {
+    cover.style.cursor = 'pointer';
+    cover.addEventListener('click', () => openVideo('uploads/linguagens-programacao.mp4'));
+  }
+
+  // Make sure active content shows nice state
+  const active = document.querySelector('.conteudo.active');
+  if (active && !active.classList.contains('checked')) {
+    // leave as is — user can check
+  }
+}
+
+init();
+
+// Expose a tiny public API for reuse / testing (optional)
+window.TrilhaViewer = {
+  openVideo: (src) => openVideo(src),
+  openDoc: () => openPdfViewer(),
+  renderChart: (k) => renderChart(k),
+  finishTrail: () => openCertificateFlow()
+};
+</script>
+</body>
+</html>
